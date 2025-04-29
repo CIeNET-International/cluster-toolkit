@@ -20,14 +20,14 @@
 
 vars:
   # Define overall deployment variables
-  deployment_name: af3-slurm         # adjust if necessary
-  project_id:                        # supply existing project id
-  region: us-central1                # supply region with C3D-highmem and GPU capacity
+  deployment_name: mesa0429-af3-slurm         # adjust if necessary
+  project_id: cienet-549295                 # supply existing project id
+  region: us-central1              # supply region with C3D-highmem and GPU capacity
   zone: us-central1-a                # supply zone with C3D-highmem and GPU capacity
 
   # Required buckets for weights and databases
-  modelweights_bucket: ""            # name of your bucket with af3 model weights
-  database_bucket: ""                # name of your bucket with the database files
+  modelweights_bucket: "mesa-af3-bucketfs"            # name of your bucket with af3 model weights
+  database_bucket: "mesa-af3-bucketfs"                # name of your bucket with the database files
 
   # AF3 model - architecture mappings - typically do not need to be modified
   sif_dir: /opt/apps/af3/containers  # default path for the local copy of the container image
@@ -49,12 +49,17 @@ vars:
   af3service_jobbucket: ""           # set to "" if not used
   af3service_user: af3
 
+  # Choose if you want the Slurm REST API Simple Service daemon started
+  af3slurmrestapi_activate: true
+  af3slurmrestapi_user: af3
+
+
   # Choose Default Datapipeline Partition
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
   default_datapipeline_timeout: 5400
 
   # Choose Default Inference Partition
-  default_inference_partition: $(vars.inference_g2_partition)
+  default_inference_partition: $(vars.inference_a2u_partition)
   default_inference_timeout: 3600
 
   # Datapipeline Partition Presets
@@ -63,8 +68,8 @@ vars:
     machine_type: c3d-highmem-180    # minimal sku to hold databases in in memory file system
     memory: 60
     cpu_count: 8
-    node_count_static: 0             # number of datapipeline nodes; 1 node can run multiple concurrent datapipeline jobs
-    node_count_dynamic: 3            # number of dynamic datapipeline nodes
+    node_count_static: 2            # number of datapipeline nodes; 1 node can run multiple concurrent datapipeline jobs
+    node_count_dynamic: 0            # number of dynamic datapipeline nodes
 
   # Inference Partitions Presets
   inference_g2_partition:
@@ -72,8 +77,8 @@ vars:
     machine_type: g2-standard-12     # g2 with L4 GPUs has 24GB of GPU memory; see README.md for recommendation
     memory: 46
     cpu_count: 12
-    node_count_static: 0             # number of static inference nodes; 1 GPU = 1 model inference
-    node_count_dynamic: 10           # number of dynamic inference nodes
+    node_count_static: 2             # number of static inference nodes; 1 GPU = 1 model inference
+    node_count_dynamic: 0           # number of dynamic inference nodes
 
   inference_a2_partition:
     name: infa2
@@ -88,5 +93,10 @@ vars:
     machine_type: a2-ultragpu-1g     # a2-ultra with A100 GPUs has 80GB of GPU memory
     memory: 160
     cpu_count: 12
-    node_count_static: 0             # number of static inference nodes; 1 GPU = 1 model inference
-    node_count_dynamic: 5           # number of dynamic inference nodes
+    node_count_static: 3             # number of static inference nodes; 1 GPU = 1 model inference
+    node_count_dynamic: 0           # number of dynamic inference nodes
+
+  notebook:
+    machine_type: n1-standard-4   
+    secret_name: af3_slurm_api_token
+    api_port: 6820
