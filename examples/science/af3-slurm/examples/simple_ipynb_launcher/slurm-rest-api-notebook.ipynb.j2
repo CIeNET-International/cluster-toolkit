@@ -1,0 +1,210 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 🛠️ Install Dependencies\n",
+    "First, install the required dependencies from `notebook-requirements.txt`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "!pip install -r notebook-requirements.txt\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 🚀 AF3 - System Settings\n",
+    "These settings configure partitions, memory, CPU, and default timeouts. Below are the detailed system settings:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Datapipeline Partition (C3DH)\n",
+    "- **Name**: {{ datapipeline_c3dhm_partition_name }}\n",
+    "- **Machine Type**: {{ datapipeline_c3dhm_partition_machine_type }}\n",
+    "- **Memory**: {{ datapipeline_c3dhm_partition_memory }} GB\n",
+    "- **CPU Count**: {{ datapipeline_c3dhm_partition_cpu_count }}\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Inference Partition (G2)\n",
+    "- **Name**: {{ inference_g2_partition_name }}\n",
+    "- **Machine Type**: {{ inference_g2_partition_machine_type }}\n",
+    "- **Memory**: {{ inference_g2_partition_memory }} GB\n",
+    "- **CPU Count**: {{ inference_g2_partition_cpu_count }}\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Inference Partition (A2)\n",
+    "- **Name**: {{ inference_a2_partition_name }}\n",
+    "- **Machine Type**: {{ inference_a2_partition_machine_type }}\n",
+    "- **Memory**: {{ inference_a2_partition_memory }} GB\n",
+    "- **CPU Count**: {{ inference_a2_partition_cpu_count }}\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Inference Partition (A2U)\n",
+    "- **Name**: {{ inference_a2u_partition_name }}\n",
+    "- **Machine Type**: {{ inference_a2u_partition_machine_type }}\n",
+    "- **Memory**: {{ inference_a2u_partition_memory }} GB\n",
+    "- **CPU Count**: {{ inference_a2u_partition_cpu_count }}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "af3slurmrestapi_activate = \"{{ af3slurmrestapi_activate }}\"\n",
+    "service_user = \"{{ service_user }}\"\n",
+    "secret_name = \"{{ secret_name }}\"\n",
+    "default_datapipeline_partition_name = \"{{ default_datapipeline_partition_name }}\"\n",
+    "default_datapipeline_timeout = {{ default_datapipeline_timeout }}\n",
+    "default_inference_partition_name = \"{{ default_inference_partition_name }}\"\n",
+    "default_inference_timeout = {{ default_inference_timeout }}\n",
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 🔬 AF3 - Science Settings\n",
+    "Scientific parameters for model behavior like seeds, iterations, and templates."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "max_template_date = \"{{ max_template_date }}\"\n",
+    "conformer_max_iterations = {{ conformer_max_iterations }}\n",
+    "num_recycles = {{ num_recycles }}\n",
+    "num_diffusion_samples = {{ num_diffusion_samples }}\n",
+    "num_seeds = {{ num_seeds }}\n",
+    "save_embeddings = {{ save_embeddings }}"
+   ]
+  },
+    {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📂 Loading SLURM Info\n",
+    "We will attempt to load the SLURM configuration data from a JSON file (`slurm_info.json`). If the file is missing, an error will be displayed."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import json\n",
+    "data = {}\n",
+    "try:\n",
+    "    with open(\"slurm_info.json\", \"r\", encoding=\"utf-8\") as f:\n",
+    "        data = json.load(f)\n",
+    "except FileNotFoundError:\n",
+    "    print(\"Can't find token file.\")\n",
+    "    exit()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 🔑 AF3 - SLURM REST API\n",
+    "This section contains the SLURM REST API configuration. The API is used to interact with the SLURM job scheduler."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Initialize SlurmClient\n",
+    "client = SlurmClient(remote_ip=data[\"external_ip\"], gcp_project_id={{ project_id }}, gcp_secret_name={{ secret_name }})\n",
+    "\n",
+    "# Example Usage: Ping\n",
+    "ping_response = client.ping()\n",
+    "print(\"Ping Response:\")\n",
+    "print(json.dumps(ping_response))\n",
+    "\n",
+    "# Job configuration\n",
+    "job_config = {\n",
+    "    \"account\": \"{{ service_user }}\",\n",
+    "    \"tasks\": 1,\n",
+    "    \"name\": \"af3_job\",\n",
+    "    \"partition\": default_inference_partition_name,\n",
+    "    \"current_working_directory\": \"/home/{{ service_user }}\",\n",
+    "    \"environment\": [\n",
+    "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
+    "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
+    "    ],\n",
+    "}\n",
+    "script_config = \"#!/bin/bash\\nsleep 15\"\n",
+    "\n",
+    "# Submit job\n",
+    "submit_job_response = client.submit_job(job_config, script_config)\n",
+    "print(\"Submit Job Response:\", submit_job_response)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 🧮 Datapipeline\n",
+    "Run Datapipeline from uploaded files. This is a simple example of how to run a Datapipeline job using the AF3 SLURM REST API."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from slurm_client import SlurmClient\n",
+    "# Example of how to use SlurmClient\n",
+    "vector1 = np.array([1, 2, 3])\n",
+    "vector2 = np.array([4, 5, 6])\n",
+    "dot_product = np.dot(vector1, vector2)\n",
+    "dot_product\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.x"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
