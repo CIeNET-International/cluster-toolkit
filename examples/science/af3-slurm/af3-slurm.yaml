@@ -26,8 +26,11 @@ vars:
    # You can find size of source image by using following command
    # gcloud compute images describe-from-family <source_image_family> --project schedmd-slurm-public
   image_build_machine_type: n2-standard-16
-  disk_size_gb: 1024
+  disk_size_gb: 128
   jupyter_bucket_local_mount: /home/jupyter/fsi # local mount point for jupyter bucket, expect to be ended without /
+  instance_image:
+    project: $(vars.project_id)
+    family: $(vars.deployment_name)-slurm-apptainer
 
   login_runners:
   - type: ansible-local
@@ -58,6 +61,7 @@ vars:
     destination: "prepare_slurm_api_token.yml"
     source: $(ghpc_stage("adm/prepare_slurm_api_token.yml"))
     args: "-e username=$(vars.af3service_user) -e project_id=$(vars.project_id) -e jupyter_bucket_local_mount=$(vars.jupyter_bucket_local_mount) -e secret_name=$(vars.notebook.secret_name)" 
+  
   # Installs simple job launcher script
   af3_job_launcher_runner:
   - type: data
@@ -157,6 +161,9 @@ deployment_groups:
     use: [slurmrestapi_bucket]
     settings:
       machine_type: $(vars.notebook.machine_type)
+      instance_image: 
+        project: "deeplearning-platform-release"
+        family: "tf-latest-cpu"
 
 - group: build-image-base
   modules:
@@ -181,7 +188,7 @@ deployment_groups:
       machine_type: $(vars.image_build_machine_type)
       source_image_family: $(vars.base_image.family)
       source_image_project_id: [$(vars.base_image.project)]
-      image_family: $(vars.base_image.family)
+      image_family: $(vars.instance_image.family)
       omit_external_ip: false
       state_timeout: 15m
 
@@ -199,7 +206,7 @@ deployment_groups:
   - id: login_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([slurmrestapi_bucket.client_install_runner,slurmrestapi_bucket.mount_runner,vars.slurm_restapi_user_runner,vars.slurm_restapi_service_runner,vars.slurm_token_runners ,vars.login_runners, vars.af3_service_user_runner]))
+      runners: $(flatten([slurmrestapi_bucket.client_install_runner,slurmrestapi_bucket.mount_runner ,vars.login_runners, vars.af3_service_user_runner]))
 
   - id: datapipeline_startup
     source: modules/scripts/startup-script
@@ -214,7 +221,7 @@ deployment_groups:
   - id: controller_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([vars.controller_runners,  vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners,vars.slurm_restapi_user_runner]))
+      runners: $(flatten([slurmrestapi_bucket.client_install_runner,slurmrestapi_bucket.mount_runner ,vars.controller_runners,  vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners, vars.slurm_restapi_user_runner,vars.slurm_restapi_service_runner,vars.slurm_token_runners]))
 
   - id: datapipeline_c3dhm_nodeset
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
@@ -229,7 +236,7 @@ deployment_groups:
       bandwidth_tier: tier_1_enabled
       allow_automatic_updates: false
       startup_script: $(datapipeline_startup.startup_script)
-      reservation_name: mesa-c3dhighmem-180
+      reservation_name: aiden-c3d-highmem-reservation
       advanced_machine_features:
         threads_per_core: null
 
@@ -240,30 +247,30 @@ deployment_groups:
       partition_name: datac3d
       exclusive: false
 
-  # - id: inference_g2_nodeset
-  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-  #   use: [af3_network]
-  #   settings:
-  #     node_count_static: $(vars.inference_g2_partition.node_count_static)
-  #     node_count_dynamic_max: $(vars.inference_g2_partition.node_count_dynamic)
-  #     disk_type: pd-balanced
-  #     disk_size_gb: $(vars.disk_size_gb)
-  #     instance_image_custom: true
-  #     machine_type: $(vars.inference_g2_partition.machine_type)
-  #     startup_script: $(inference_startup.startup_script)
-  #     bandwidth_tier: gvnic_enabled
-  #     allow_automatic_updates: false
-  #     reservation_name: aiden0416-g2-12 #TODO: delete this line when reservation is not needed
-  #     advanced_machine_features:
-  #       threads_per_core: null
+  - id: inference_g2_nodeset
+    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+    use: [af3_network]
+    settings:
+      node_count_static: $(vars.inference_g2_partition.node_count_static)
+      node_count_dynamic_max: $(vars.inference_g2_partition.node_count_dynamic)
+      disk_type: pd-balanced
+      disk_size_gb: $(vars.disk_size_gb)
+      instance_image_custom: true
+      machine_type: $(vars.inference_g2_partition.machine_type)
+      startup_script: $(inference_startup.startup_script)
+      bandwidth_tier: gvnic_enabled
+      allow_automatic_updates: false
+      reservation_name: aiden0416-g2-12 #TODO: delete this line when reservation is not needed
+      advanced_machine_features:
+        threads_per_core: null
 
-  # - id: inference_g2_partition
-  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-  #   use:
-  #   - inference_g2_nodeset
-  #   settings:
-  #     partition_name: infg2
-  #     exclusive: false
+  - id: inference_g2_partition
+    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+    use:
+    - inference_g2_nodeset
+    settings:
+      partition_name: infg2
+      exclusive: false
 
   # - id: inference_a2_nodeset
   #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
@@ -289,30 +296,30 @@ deployment_groups:
   #     partition_name: infa2
   #     exclusive: false
 
-  - id: inference_a2u_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [af3_network]
-    settings:
-      node_count_static: $(vars.inference_a2u_partition.node_count_static)
-      node_count_dynamic_max: $(vars.inference_a2u_partition.node_count_dynamic)
-      disk_type: pd-balanced
-      disk_size_gb: $(vars.disk_size_gb)
-      instance_image_custom: true
-      machine_type: $(vars.inference_a2u_partition.machine_type)
-      startup_script: $(inference_startup.startup_script)
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-      reservation_name: aiden-bpa2-reservation
-      advanced_machine_features:
-        threads_per_core: null
+  # - id: inference_a2u_nodeset
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  #   use: [af3_network]
+  #   settings:
+  #     node_count_static: $(vars.inference_a2u_partition.node_count_static)
+  #     node_count_dynamic_max: $(vars.inference_a2u_partition.node_count_dynamic)
+  #     disk_type: pd-balanced
+  #     disk_size_gb: $(vars.disk_size_gb)
+  #     instance_image_custom: true
+  #     machine_type: $(vars.inference_a2u_partition.machine_type)
+  #     startup_script: $(inference_startup.startup_script)
+  #     bandwidth_tier: gvnic_enabled
+  #     allow_automatic_updates: false
+  #     reservation_name: aiden-bpa2-reservation
+  #     advanced_machine_features:
+  #       threads_per_core: null
 
-  - id: inference_a2u_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - inference_a2u_nodeset
-    settings:
-      partition_name: infa2u
-      exclusive: false
+  # - id: inference_a2u_partition
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+  #   use:
+  #   - inference_a2u_nodeset
+  #   settings:
+  #     partition_name: infa2u
+  #     exclusive: false
 
   - id: slurm_login
     source: community/modules/scheduler/schedmd-slurm-gcp-v6-login
@@ -329,9 +336,9 @@ deployment_groups:
     use:
     - af3_network
     - datapipeline_c3dhm_partition
-    # - inference_g2_partition
+    - inference_g2_partition
     # - inference_a2_partition
-    - inference_a2u_partition
+    # - inference_a2u_partition
     - slurm_login
     - database_bucket
     settings:
