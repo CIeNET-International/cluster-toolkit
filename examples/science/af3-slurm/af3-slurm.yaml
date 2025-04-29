@@ -26,11 +26,8 @@ vars:
    # You can find size of source image by using following command
    # gcloud compute images describe-from-family <source_image_family> --project schedmd-slurm-public
   image_build_machine_type: n2-standard-16
-  # Cluster settings
-  instance_image:
-    project: $(vars.project_id)
-    family: $(vars.deployment_name)-slurm-apptainer
-  disk_size_gb: 64
+  disk_size_gb: 1024
+  jupyter_bucket_local_mount: /home/jupyter/fsi # local mount point for jupyter bucket, expect to be ended without /
 
   login_runners:
   - type: ansible-local
@@ -55,7 +52,12 @@ vars:
     destination: "inference.yml"
     source: $(ghpc_stage("adm/inference.yml"))
     args: "-e jax_compilation_cache_path=$(vars.jax_compilation_cache_path)"
-
+    
+  slurm_token_runners:
+  - type: ansible-local
+    destination: "prepare_slurm_api_token.yml"
+    source: $(ghpc_stage("adm/prepare_slurm_api_token.yml"))
+    args: "-e username=$(vars.af3service_user) -e project_id=$(vars.project_id) -e jupyter_bucket_local_mount=$(vars.jupyter_bucket_local_mount) -e secret_name=$(vars.notebook.secret_name)" 
   # Installs simple job launcher script
   af3_job_launcher_runner:
   - type: data
@@ -97,11 +99,36 @@ vars:
     source: $(ghpc_stage("examples/simple_service_launcher/af3-service.yml"))
     args: "-e service_user=$(vars.af3service_user) -e af3service_activate=$(vars.af3service_activate) -e bucket_name=$(vars.af3service_jobbucket) -e sif_dir=$(vars.sif_dir) -e db_dir=$(vars.db_dir) -e model_dir=$(vars.model_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path) -e datapipeline_partition=$(vars.default_datapipeline_partition.name) -e datapipeline_memory=$(vars.default_datapipeline_partition.memory) -e datapipeline_cpu_count=$(vars.default_datapipeline_partition.cpu_count) -e datapipeline_timeout=$(vars.default_datapipeline_timeout) -e inference_partition=$(vars.default_inference_partition.name) -e inference_memory=$(vars.default_inference_partition.memory) -e inference_cpu_count=$(vars.default_inference_partition.cpu_count) -e inference_timeout=$(vars.default_inference_timeout)  -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings)"
 
+  slurm_restapi_user_runner:
+  - type: ansible-local
+    destination: "slurm-rest-user.yml"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-user.yml"))
+    args: "-e service_user=$(vars.af3service_user)"
+
+  slurm_restapi_service_runner:
+  - type: data
+    destination: "/tmp/slurm-rest-api-notebook.ipynb.j2"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-api-notebook.ipynb.j2"))
+  - type: data
+    destination: "/opt/apps/af3/examples/simple_ipynb_launcher/notebook-requirements.txt"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/requirements.txt"))
+  - type: ansible-local
+    destination: "slurm-rest-service.yml"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-service.yml"))
+    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.af3slurmrestapi_user) -e af3slurmrestapi_activate=$(vars.af3slurmrestapi_activate) -e port=$(vars.notebook.api_port) -e secret_name=$(vars.notebook.secret_name) -e jupyter_bucket_local_mount=$(vars.jupyter_bucket_local_mount) -e default_datapipeline_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_inference_partition_name=$(vars.inference_g2_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings)"
+
 deployment_groups:
 - group: environment
   modules:
   - id: af3_network
     source: modules/network/vpc
+    settings:
+      firewall_rules:
+        - name: $(vars.deployment_name)-slurm-api-firewall
+          ranges: [0.0.0.0/0]
+          allow:
+            - protocol: tcp
+              ports: ["$(vars.notebook.api_port)"]
 
   - id: enable_apis
     source: community/modules/project/service-enablement
@@ -110,9 +137,29 @@ deployment_groups:
         "cloudresourcemanager.googleapis.com",
         "container.googleapis.com",
         "logging.googleapis.com",
-        "compute.googleapis.com"
+        "notebooks.googleapis.com",
+        "compute.googleapis.com",
       ]
 
+- group: jupyter_notebook
+  modules:
+  - id: slurmrestapi_bucket
+    source: community/modules/file-system/cloud-storage-bucket
+    settings:
+      name_prefix: slurmrestapi_bucket
+      random_suffix: true
+      force_destroy: true
+      local_mount: $(vars.jupyter_bucket_local_mount)
+      mount_options: defaults,_netdev,implicit_dirs,allow_other,file_mode=777,dir_mode=777
+
+  - id: slurmrestapi_notebook
+    source: community/modules/compute/notebook
+    use: [slurmrestapi_bucket]
+    settings:
+      machine_type: $(vars.notebook.machine_type)
+
+- group: build-image-base
+  modules:
   - id: slurm-image-build-script
     source: modules/scripts/startup-script
     settings:
@@ -134,7 +181,7 @@ deployment_groups:
       machine_type: $(vars.image_build_machine_type)
       source_image_family: $(vars.base_image.family)
       source_image_project_id: [$(vars.base_image.project)]
-      image_family: $(vars.instance_image.family)
+      image_family: $(vars.base_image.family)
       omit_external_ip: false
       state_timeout: 15m
 
@@ -152,7 +199,7 @@ deployment_groups:
   - id: login_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([vars.login_runners, vars.af3_service_user_runner]))
+      runners: $(flatten([slurmrestapi_bucket.client_install_runner,slurmrestapi_bucket.mount_runner,vars.slurm_restapi_user_runner,vars.slurm_restapi_service_runner,vars.slurm_token_runners ,vars.login_runners, vars.af3_service_user_runner]))
 
   - id: datapipeline_startup
     source: modules/scripts/startup-script
@@ -167,7 +214,7 @@ deployment_groups:
   - id: controller_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([vars.controller_runners, vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners]))
+      runners: $(flatten([vars.controller_runners,  vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners,vars.slurm_restapi_user_runner]))
 
   - id: datapipeline_c3dhm_nodeset
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
@@ -182,6 +229,7 @@ deployment_groups:
       bandwidth_tier: tier_1_enabled
       allow_automatic_updates: false
       startup_script: $(datapipeline_startup.startup_script)
+      reservation_name: mesa-c3dhighmem-180
       advanced_machine_features:
         threads_per_core: null
 
@@ -192,53 +240,54 @@ deployment_groups:
       partition_name: datac3d
       exclusive: false
 
-  - id: inference_g2_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [af3_network]
-    settings:
-      node_count_static: $(vars.inference_g2_partition.node_count_static)
-      node_count_dynamic_max: $(vars.inference_g2_partition.node_count_dynamic)
-      disk_type: pd-balanced
-      disk_size_gb: $(vars.disk_size_gb)
-      instance_image_custom: true
-      machine_type: $(vars.inference_g2_partition.machine_type)
-      startup_script: $(inference_startup.startup_script)
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-      advanced_machine_features:
-        threads_per_core: null
+  # - id: inference_g2_nodeset
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  #   use: [af3_network]
+  #   settings:
+  #     node_count_static: $(vars.inference_g2_partition.node_count_static)
+  #     node_count_dynamic_max: $(vars.inference_g2_partition.node_count_dynamic)
+  #     disk_type: pd-balanced
+  #     disk_size_gb: $(vars.disk_size_gb)
+  #     instance_image_custom: true
+  #     machine_type: $(vars.inference_g2_partition.machine_type)
+  #     startup_script: $(inference_startup.startup_script)
+  #     bandwidth_tier: gvnic_enabled
+  #     allow_automatic_updates: false
+  #     reservation_name: aiden0416-g2-12 #TODO: delete this line when reservation is not needed
+  #     advanced_machine_features:
+  #       threads_per_core: null
 
-  - id: inference_g2_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - inference_g2_nodeset
-    settings:
-      partition_name: infg2
-      exclusive: false
+  # - id: inference_g2_partition
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+  #   use:
+  #   - inference_g2_nodeset
+  #   settings:
+  #     partition_name: infg2
+  #     exclusive: false
 
-  - id: inference_a2_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [af3_network]
-    settings:
-      node_count_static: $(vars.inference_a2_partition.node_count_static)
-      node_count_dynamic_max: $(vars.inference_a2_partition.node_count_dynamic)
-      disk_type: pd-balanced
-      disk_size_gb: $(vars.disk_size_gb)
-      instance_image_custom: true
-      machine_type: $(vars.inference_a2_partition.machine_type)
-      startup_script: $(inference_startup.startup_script)
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-      advanced_machine_features:
-        threads_per_core: null
+  # - id: inference_a2_nodeset
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  #   use: [af3_network]
+  #   settings:
+  #     node_count_static: $(vars.inference_a2_partition.node_count_static)
+  #     node_count_dynamic_max: $(vars.inference_a2_partition.node_count_dynamic)
+  #     disk_type: pd-balanced
+  #     disk_size_gb: $(vars.disk_size_gb)
+  #     instance_image_custom: true
+  #     machine_type: $(vars.inference_a2_partition.machine_type)
+  #     startup_script: $(inference_startup.startup_script)
+  #     bandwidth_tier: gvnic_enabled
+  #     allow_automatic_updates: false
+  #     advanced_machine_features:
+  #       threads_per_core: null
 
-  - id: inference_a2_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - inference_a2_nodeset
-    settings:
-      partition_name: infa2
-      exclusive: false
+  # - id: inference_a2_partition
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+  #   use:
+  #   - inference_a2_nodeset
+  #   settings:
+  #     partition_name: infa2
+  #     exclusive: false
 
   - id: inference_a2u_nodeset
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
@@ -253,6 +302,7 @@ deployment_groups:
       startup_script: $(inference_startup.startup_script)
       bandwidth_tier: gvnic_enabled
       allow_automatic_updates: false
+      reservation_name: aiden-bpa2-reservation
       advanced_machine_features:
         threads_per_core: null
 
@@ -279,8 +329,8 @@ deployment_groups:
     use:
     - af3_network
     - datapipeline_c3dhm_partition
-    - inference_g2_partition
-    - inference_a2_partition
+    # - inference_g2_partition
+    # - inference_a2_partition
     - inference_a2u_partition
     - slurm_login
     - database_bucket
@@ -292,8 +342,11 @@ deployment_groups:
       enable_external_prolog_epilog: true
       login_startup_script: $(login_startup.startup_script)
       controller_startup_script: $(controller_startup.startup_script)
+      login_startup_scripts_timeout: 2000
+      controller_startup_scripts_timeout: 2000
       compute_startup_scripts_timeout: 2000
 
   - id: hpc_dashboard
     source: modules/monitoring/dashboard
     outputs: [instructions]
+
