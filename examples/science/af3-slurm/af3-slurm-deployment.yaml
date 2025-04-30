@@ -99,4 +99,5 @@ vars:
   notebook:
     machine_type: n1-standard-4   
     secret_name: af3_slurm_api_token
+    bucket_local_mount: /home/jupyter/fsi # local mount point for jupyter bucket, expect to be ended without /
     api_port: 7080
