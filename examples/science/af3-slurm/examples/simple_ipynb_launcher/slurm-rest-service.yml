@@ -22,10 +22,26 @@
     service_user:
     jupyter_bucket_local_mount:
     secret_name:
+    api_port: 
+    sif_dir:
+    model_dir:
+    db_dir:
+    pdb_database_path:
+    jax_compilation_cache_path:
+
+    # Default Datapipeline Partition Config
     default_datapipeline_partition_name:
     default_datapipeline_timeout:
+    default_datapipeline_cpu_count:
+    default_datapipeline_memory:
+
+    # Default Inference Partition Config
     default_inference_partition_name:
     default_inference_timeout:
+    default_inference_cpu_count:
+    default_inference_memory:
+
+    # Configuration info for each partition
     datapipeline_c3dhm_partition_name:
     datapipeline_c3dhm_partition_machine_type:
     datapipeline_c3dhm_partition_memory:
@@ -42,7 +58,6 @@
     inference_a2u_partition_machine_type:
     inference_a2u_partition_memory:
     inference_a2u_partition_cpu_count:
-    port: 
 
     # AF3 Science Settings
     max_template_date:
@@ -52,19 +67,36 @@
     num_seeds:
     save_embeddings:
 
-    
     # fixed variables, not intended to be modified
     service_name: af3slurmrestapi
     service_type: simple
-    exec_start: "slurmrestd -u {{ service_user }} 0.0.0.0:{{ port }}"
+    exec_start: "slurmrestd -u {{ service_user }} 0.0.0.0:{{ api_port }}"
     start_after: network.target
     working_directory: "/home/{{ service_user }}"
     slurmrestapi_environment: "SLURM_JWT=daemon"
+    af3_job_template_path: "{{ jupyter_bucket_local_mount }}/launch_af3_job.sh.j2"
 
   tasks:
   - name: Ensure af3slurmrestapi_activate is boolean
     set_fact:
       activate: "{{ af3slurmrestapi_activate | bool }}"
+
+  - name: Copy predefined script to launch directory
+    ansible.builtin.copy:
+      src: /tmp/launch_af3_job.sh.j2
+      dest: "{{ af3_job_template_path }}"
+      owner: root
+      group: root
+      mode: '0755'
+
+
+  - name: Copy predefined library to launch directory
+    ansible.builtin.copy:
+      src: /tmp/slurm_client.py
+      dest: "{{ jupyter_bucket_local_mount }}/slurm_client.py" # Destination on target
+      owner: root
+      group: root
+      mode: '0755'
 
   - name: Create /var/log/{{ service_name }} directory
     file:
@@ -124,6 +156,8 @@
       owner: root
       group: root
       mode: '0644'
+
+
   handlers:
   - name: Reload systemd
     listen: Reload systemd

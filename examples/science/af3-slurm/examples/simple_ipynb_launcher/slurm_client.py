@@ -1,16 +1,27 @@
 import requests
-import json
 import os
 from google.cloud import secretmanager_v1
 from google.api_core.exceptions import NotFound
-from typing import Optional,Dict
-class SlurmClient:
-    def __init__(self, remote_host: str, remote_port: int, gcp_project_id:str, gcp_secret_name:str):
+from typing import Optional, Dict
+import jinja2
+import datetime
+import time
+
+def is_valid_path(input_path: str, expected_prefix: str) -> bool:
+    input_path = os.path.abspath(input_path)
+    return os.path.isabs(input_path) and input_path.startswith(expected_prefix)
+
+
+class AF3SlurmClient:
+    """An AF3 client for interacting with the Slurm API."""
+
+    def __init__(self, remote_host: str, remote_port: int, gcp_project_id: str, gcp_secret_name: str, af3_config: dict):
         self.base_url = f"http://{remote_host}:{remote_port}/slurm/v0.0.41"
         self.gcp_project_id = gcp_project_id
         self.gcp_secret_name = gcp_secret_name
-        
-    def __get_header(self)->Optional[Dict]:
+        self.af3_config = af3_config
+
+    def __get_header(self) -> Optional[Dict]:
         client = secretmanager_v1.SecretManagerServiceClient()
         secret_path = f"projects/{self.gcp_project_id}/secrets/{self.gcp_secret_name}/versions/latest"
 
@@ -21,18 +32,18 @@ class SlurmClient:
             return {"X-SLURM-USER-TOKEN": token}
         except NotFound:
             print(f"[ERROR] Secret '{self.gcp_secret_name}' not found.")
-            raise NotFound(f"[ERROR] Secret '{self.gcp_secret_name}' not found.")
+            raise NotFound(
+                f"[ERROR] Secret '{self.gcp_secret_name}' not found.")
         except Exception as e:
             print(f"[ERROR] Failed to retrieve token: {e}")
             raise Exception(f"[ERROR] Failed to retrieve token: {e}")
-            
-        
-    def __get_url(self, endpoint):
+
+    def __retrieve_url(self, endpoint):
         return f"{self.base_url}/{endpoint}"
 
     def ping(self):
         """Pings the Slurm API server."""
-        url = self.__get_url("ping")
+        url = self.__retrieve_url("ping")
         try:
             header = self.__get_header()
             response = requests.get(url, headers=header)
@@ -43,10 +54,19 @@ class SlurmClient:
             print(f"Error pinging Slurm API: {e}")
             return None
 
-    def submit_job(self, job_config, script_path):
+    def _render_template(self, config_options: dict) -> str:
+        """Renders the Jinja2 template with af3_config values."""
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+            os.path.dirname(self.af3_config["job_template_path"])))
+        template = env.get_template(
+            os.path.basename(self.af3_config["job_template_path"]))
+        rendered = template.render(config_options)
+        return rendered
+
+    def submit_job(self, job_config: dict, job_command: str):
         """Submits a job to Slurm server."""
-        url = self.__get_url("job/submit")
-        submit_input = {"job": job_config, "script": script_path}
+        url = self.__retrieve_url("job/submit")
+        submit_input = {"job": job_config, "script": job_command}
         try:
             header = self.__get_header()
             response = requests.post(url, headers=header, json=submit_input)
@@ -56,9 +76,65 @@ class SlurmClient:
             print(f"Error submitting job to Slurm: {e}")
             return None
 
+    def submit_data_pipeline_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None):
+        """Submits a data pipeline job to Slurm server."""
+        if not is_valid_path(input_file, self.af3_config["default_folder"]):
+            raise ValueError(
+                f"Input file path '{input_file}' is not valid. It should be absolute and start with '{self.af3_config['input_prefix']}'.")
+        if output_path is None:
+            # Generate a timestamped output path if not provided
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_path = os.path.join(self.af3_config["default_folder"], "datapipeline", f"output_{timestamp}", os.path.splitext(
+                os.path.basename(input_file))[0])
+
+        if not is_valid_path(output_path, self.af3_config["default_folder"]):
+            raise ValueError(
+                f"Output file path '{output_path}' is not valid. It should be absolute and start with '{self.af3_config['input_prefix']}'.")
+        script_options = {**self.af3_config, ** {
+            "input_path": input_file,
+            "output_path": output_path,
+            "job-type": "datapipeline",
+        }}
+        script = self._render_template(script_options)
+        return self.submit_job(job_config, script)
+
+
+    def submit_inference_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None):
+        """Submits an inference job to Slurm server."""
+        if not is_valid_path(input_file, self.af3_config["default_folder"]):
+            raise ValueError(
+                f"Input file path '{input_file}' is not valid. It should be absolute and start with '{self.af3_config['input_prefix']}'.")
+
+        if output_path is None:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_path = os.path.join(self.af3_config["default_folder"], "inference", f"output_{timestamp}", os.path.splitext(
+                os.path.basename(input_file))[0])
+        if not is_valid_path(output_path, self.af3_config["default_folder"]):
+            raise ValueError(
+                f"Output file path '{output_path}' is not valid. It should be absolute and start with '{self.af3_config['input_prefix']}'.")
+        script_options = {**self.af3_config, ** {
+            "input_path": input_file,
+            "output_path": output_path,
+            "job-type": "inference",
+        }}
+        script = self._render_template(script_options)
+        return self.submit_job(job_config, script)
+
+    def cancel_job(self, job_id):
+        """Cancels a job on the Slurm server."""
+        url = self.__retrieve_url(f"job/{job_id}/cancel")
+        try:
+            header = self.__get_header()
+            response = requests.post(url, headers=header)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error canceling job {job_id} on Slurm: {e}")
+            return None
+
     def get_job(self, job_id):
         """Retrieves information about a specific job."""
-        url = self.__get_url(f"job/{job_id}")
+        url = self.__retrieve_url(f"job/{job_id}")
         try:
             response = requests.get(url, headers=self.header_token)
             response.raise_for_status()
@@ -70,7 +146,7 @@ class SlurmClient:
     def get_all_jobs(self):
         """Retrieves information about all jobs."""
         url = os.path.join(self.base_url, "jobs")
-        url = self.__get_url("jobs")
+        url = self.__retrieve_url("jobs")
         try:
             response = requests.get(url, headers=self.header_token)
             response.raise_for_status()
@@ -78,41 +154,3 @@ class SlurmClient:
         except requests.exceptions.RequestException as e:
             print(f"Error retrieving all jobs from Slurm: {e}")
             return None
-
-
-def main():
-    data = {}
-    try:
-        with open("slurm_info.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print("Can't find token file.")
-        exit()
-    client = SlurmClient(remote_ip=data["external_ip"],gcp_project_id="cienet-549295",gcp_secret_name="af3_slurm_api_token")
-
-
-    # Example Usage:
-    # Ping
-
-    ping_response = client.ping()
-    print("Ping Response:")
-    print(json.dumps(ping_response))
-
-    job_config = {
-        "account": "af3",
-        "tasks": 1,
-        "name": "af3_job",
-        "partition": "c3dhm",
-        "current_working_directory": "/home/af3",
-        "environment": [
-            "PATH=/bin:/usr/bin/:/usr/local/bin/",
-            "LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib",
-        ],
-    }
-    script_config = "#!/bin/bash\nsleep 15"
-    submit_job_response = client.submit_job(job_config, script_config)
-    print("Submit Job Response:", submit_job_response)
-
-
-if __name__ == "__main__":
-    main()
