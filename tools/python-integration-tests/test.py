@@ -34,7 +34,10 @@ class Test(unittest.TestCase):  # Inherit from unittest.TestCase
     def setUp(self):
         self.addCleanup(self.clean_up)
         self.deployment.deploy()
-        time.sleep(120)
+        # time.sleep(120)
+        # abrstractor implemnet setUp (below)
+    def ready(self):
+        pass
 
     def clean_up(self):
         self.deployment.destroy()
@@ -51,12 +54,15 @@ class SlurmTest(Test):
         self.ssh_manager.close()
 
     def setUp(self):
+        #retry after every 5 / 10 secs till 120 s
         try:
             super().setUp()
             hostname = self.get_login_node()
             self.ssh(hostname)
         except Exception as err:
             self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
+    def ready(self):
+        return 
 
     def clean_up(self):
         super().clean_up()
