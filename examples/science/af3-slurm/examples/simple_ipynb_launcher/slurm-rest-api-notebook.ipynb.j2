@@ -70,21 +70,6 @@
    ]
   },
   {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "af3slurmrestapi_activate = \"{{ af3slurmrestapi_activate }}\"\n",
-    "service_user = \"{{ service_user }}\"\n",
-    "secret_name = \"{{ secret_name }}\"\n",
-    "default_datapipeline_partition_name = \"{{ default_datapipeline_partition_name }}\"\n",
-    "default_datapipeline_timeout = {{ default_datapipeline_timeout }}\n",
-    "default_inference_partition_name = \"{{ default_inference_partition_name }}\"\n",
-    "default_inference_timeout = {{ default_inference_timeout }}\n",
-   ]
-  },
-  {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
@@ -99,11 +84,11 @@
    "outputs": [],
    "source": [
     "max_template_date = \"{{ max_template_date }}\"\n",
-    "conformer_max_iterations = {{ conformer_max_iterations }}\n",
-    "num_recycles = {{ num_recycles }}\n",
-    "num_diffusion_samples = {{ num_diffusion_samples }}\n",
-    "num_seeds = {{ num_seeds }}\n",
-    "save_embeddings = {{ save_embeddings }}"
+    "conformer_max_iterations = \"{{ conformer_max_iterations }}\"\n",
+    "num_recycles = \"{{ num_recycles }}\"\n",
+    "num_diffusion_samples = \"{{ num_diffusion_samples }}\"\n",
+    "num_seeds = \"{{ num_seeds }}\"\n",
+    "save_embeddings = \"{{ save_embeddings }}\"\n"
    ]
   },
     {
@@ -125,9 +110,9 @@
     "try:\n",
     "    with open(\"slurm_info.json\", \"r\", encoding=\"utf-8\") as f:\n",
     "        data = json.load(f)\n",
+    "        print(data)\n",
     "except FileNotFoundError:\n",
-    "    print(\"Can't find token file.\")\n",
-    "    exit()"
+    "    print(\"Can't find token file.\")\n"
    ]
   },
   {
@@ -138,36 +123,75 @@
     "This section contains the SLURM REST API configuration. The API is used to interact with the SLURM job scheduler."
    ]
   },
+   {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source":[
+        "# GCP Secret Name\n",
+        "gcp_secret_name = \"{{ secret_name }}\"\n",
+        "# Af3 default config\n",
+        "af3_config = {\n",
+        "    \"datapipeline_partition\": \"{{ default_datapipeline_partition_name }}\",\n",
+        "    \"inference_partition\": \"{{ default_inference_partition_name }}\",\n",
+        "    \"datapipeline_memory\": \"{{ default_datapipeline_memory }}\",\n",
+        "    \"inference_memory\": \"{{ default_inference_memory }}\",\n",
+        "    \"datapipeline_cpu_count\": \"{{ default_datapipeline_cpu_count }}\",\n",
+        "    \"inference_cpu_count\": \"{{ default_inference_cpu_count }}\",\n",
+        "    \"datapipeline_timeout\": \"{{ default_datapipeline_timeout }}\",\n",
+        "    \"inference_timeout\": \"{{ default_inference_timeout }}\",\n",
+        "    \"jax_compilation_cache_path\": \"{{ jax_compilation_cache_path }}\",\n",
+        "    \"max_template_date\": max_template_date,\n",
+        "    \"conformer_max_iterations\": conformer_max_iterations,\n",
+        "    \"num_recycles\": num_recycles,\n",
+        "    \"num_diffusion_samples\": num_diffusion_samples,\n",
+        "    \"num_seeds\": num_seeds,\n",
+        "    \"save_embeddings\": save_embeddings,\n",
+        "    \n",
+        "    \n",
+        "    # Warning: don't change manually\n",
+        "    \"sif_dir\": \"{{ sif_dir }}\",\n",
+        "    \"model_dir\": \"{{ model_dir }}\",\n",
+        "    \"db_dir\": \"{{ db_dir }}\",\n",
+        "    \"pdb_database_path\": \"{{ pdb_database_path }}\",\n",
+        "    \"default_folder\": \"{{ jupyter_bucket_local_mount }}\",\n",
+        "    \"job_template_path\": \"{{ af3_job_template_path }}\",\n",
+        "}\n"
+    ]
+  },
   {
    "cell_type": "code",
    "execution_count": null,
    "metadata": {},
    "outputs": [],
    "source": [
-    "# Initialize SlurmClient\n",
-    "client = SlurmClient(remote_ip=data[\"external_ip\"], gcp_project_id={{ project_id }}, gcp_secret_name={{ secret_name }})\n",
+    "# Initialize AF3SlurmClient\n",
+    "from slurm_client import AF3SlurmClient\n",
+    "client = AF3SlurmClient(remote_host=data[\"external_ip\"],remote_port={{ api_port }}, gcp_project_id=\"{{ project_id }}\", gcp_secret_name=gcp_secret_name, af3_config=af3_config)\n",
     "\n",
     "# Example Usage: Ping\n",
     "ping_response = client.ping()\n",
     "print(\"Ping Response:\")\n",
     "print(json.dumps(ping_response))\n",
     "\n",
+    "# Example Usage: Submit Job\n",
     "# Job configuration\n",
     "job_config = {\n",
     "    \"account\": \"{{ service_user }}\",\n",
     "    \"tasks\": 1,\n",
-    "    \"name\": \"af3_job\",\n",
-    "    \"partition\": default_inference_partition_name,\n",
-    "    \"current_working_directory\": \"/home/{{ service_user }}\",\n",
+    "    \"name\": \"af3_slurm_rest_api_job\",\n",
+    "    \"partition\": \"{{ default_datapipeline_partition_name }}\",\n",
+    "    \"current_working_directory\": \"{{ working_directory }}\",\n",
     "    \"environment\": [\n",
     "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
     "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
     "    ],\n",
     "}\n",
-    "script_config = \"#!/bin/bash\\nsleep 15\"\n",
+    "script_command = \"#!/bin/bash\\nsleep 15\"\n",
     "\n",
-    "# Submit job\n",
-    "submit_job_response = client.submit_job(job_config, script_config)\n",
+    "# Send job config and its command \n",
+    "submit_job_response = client.submit_job(job_config, script_command)\n",
     "print(\"Submit Job Response:\", submit_job_response)"
    ]
   },
@@ -185,14 +209,68 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "from slurm_client import SlurmClient\n",
-    "# Example of how to use SlurmClient\n",
-    "vector1 = np.array([1, 2, 3])\n",
-    "vector2 = np.array([4, 5, 6])\n",
-    "dot_product = np.dot(vector1, vector2)\n",
-    "dot_product\n"
+    "# Example of how to use SlurmClient to submit datapipeline job\n",
+      "# Job configuration\n",
+      "job_config = {\n",
+      "    \"account\": \"{{ service_user }}\",\n",
+      "    \"tasks\": 1,\n",
+      "    \"name\": \"af3_slurm_rest_api_job\",\n",
+      "    \"partition\": \"{{ default_datapipeline_partition_name }}\",\n",
+      "    \"current_working_directory\": \"{{ working_directory }}\",\n",
+      "    \"time_limit\": \"{{ default_datapipeline_timeout }}\",\n",
+      "    \"memory_per_node\": \"{{ default_datapipeline_memory }}\",\n",
+      "    \"cpus_per_task\": \"{{ default_datapipeline_cpu_count }}\",\n",
+      "    \"environment\": [\n",
+      "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
+      "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
+      "    ],\n",
+      "}\n",
+      "\n",
+      "# Submit job\n",
+      "# Assign `input_file` with datapipeline input file path\n",
+      "input_file= \"\"\n",
+      "submit_job_response = client.submit_data_pipeline_job(job_config, input_file)\n",
+      "print(\"Submit Job Response:\", submit_job_response)"
    ]
-  }
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+      "# 🤖 Inference\n",
+      "Run inference jobs using the AF3 SLURM REST API. This section demonstrates how to configure and submit an inference job through Slurm."
+   ]
+},
+{
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+      "# Example of how to use SlurmClient to submit inference job\n",
+      "# Job configuration\n",
+      "inference_job_config = {\n",
+      "    \"account\": \"{{ service_user }}\",\n",
+      "    \"tasks\": 1,\n",
+      "    \"name\": \"af3_slurm_rest_api_inference_job\",\n",
+      "    \"partition\": \"{{ default_inference_partition_name }}\",\n",
+      "    \"current_working_directory\": \"{{ working_directory }}\",\n",
+      "    \"time_limit\": \"{{ default_inference_timeout }}\",\n",
+      "    \"memory_per_node\": \"{{ default_inference_memory }}\",\n",
+      "    \"cpus_per_task\": \"{{ default_inference_cpu_count }}\",\n",
+      "    \"environment\": [\n",
+      "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
+      "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
+      "    ],\n",
+      "}\n",
+      "\n",
+      "# Submit job\n",
+      "# Assign `input_file` with inference input file path\n",
+      "input_file = \"\"\n",
+      "submit_inference_response = client.submit_inference_job(inference_job_config, input_file)\n",
+      "print(\"Submit Inference Job Response:\", submit_inference_response)"
+   ]
+}
  ],
  "metadata": {
   "kernelspec": {
