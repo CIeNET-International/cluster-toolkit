@@ -1,28 +1,28 @@
 # Simple Ipynb Launcher
 
-The Simple Ipynb Launcher is a Jupyter Notebook-based interface designed to streamline the process of running AlphaFold 3 jobs through a SLURM-based cluster using the SLURM REST API.
+The Simple Ipynb Launcher is comprised of a Jupyter Notebook script that automates the data pipeline and inference
+workflows by sending request to SLURM Rest API server, trigerring the data
+pipeline and/or inference processes on the respective partitions of the AlphaFold 3 blueprint. 
 
-It allows users to:
 
-- Upload AlphaFold 3 input files (see [AlphaFold 3 Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md)),
-- Launch data pipeline and/or inference jobs, and
-- View and validate output files — all within a Jupyter Notebook environment.
 
-## 📦 1. [Setup Guide: Launching the Jupyter Notebook](./Setup.md)
+## Service Logic
+There are separate directories for the input to the datapipeline stage of the 
+AlphaFold 3 workflow and the model inference stage. Any input files that are placed in these folders 
+will be independently processed. Unless specified differently at script launch, results from the
+datapipeline stage will be copied into the input directory of the inference stage.
 
-This guide explains how to properly set up and launch the Simple Ipynb Launcher environment. It includes:
+Blueprint implementation logic:
 
-- Installation of dependencies and required packages  
-- Environment configuration  
-- How to start the notebook using the launcher script  
-- Troubleshooting tips during setup
+1.  **Folder sharing:** Mounting bucket as a shared storage folder, allows user to upload input file (datapipeline or inference input dataa) directly into the notebook.
+2.  **Job Submission:** On the controller, file will be assigned from folder sharing location. 
+3.  **Data Pipeline Execution:** The data pipeline is executed on the Slurm data pipeline partition from notebook rest api request.
+4.  **Result Storage:** Upon successful completion, the data pipeline outputs are stored in the folder sharing directory within the bucket, allows user to validate the output files.
+5.  **Inference Execution:** The inference workflow follows the same job submission and result storage logic as the data pipeline.
 
-Make sure to follow this guide first if you're launching the notebook for the first time.
+## Setup Instructions
 
-## ▶️ 2. [Usage Guide: Step-by-Step Instructions](./Ipynb.md)
+Follows instructions in the notebook.
 
-After the Ipynb Launcher has been successfully launched, refer to this usage guide to:
 
-- Follow a step-by-step walkthrough of each section  
-- Learn how to input data, run data pipeline and inference  
-- Visualizing the Results
+
