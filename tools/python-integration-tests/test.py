@@ -20,6 +20,10 @@ from ssh import SSHManager
 from deployment import Deployment
 from tenacity import retry, wait_fixed, stop_after_delay
 
+#retry after every 5 / 10 secs till 120 s
+def retry_with_defaults(delay=10, timeout=120):
+    return retry(wait=wait_fixed(delay), stop=stop_after_delay(timeout))
+
 class Test(unittest.TestCase):  # Inherit from unittest.TestCase
     def __init__(self, deployment):
         super().__init__()  # Call the superclass constructor
@@ -63,8 +67,7 @@ class SlurmTest(Test):
         except Exception as err:
             self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
 
-    #retry after every 5 / 10 secs till 120 s
-    @retry(wait=wait_fixed(10), stop=stop_after_delay(120))
+    @retry_with_defaults() 
     def ready(self):
         try:
             hostname = self.get_login_node()
@@ -84,7 +87,7 @@ class SlurmTest(Test):
                 if avail != "up" or state != "idle~":
                     raise Exception(f"Partition not ready: {line}")  # triggers retry
         except Exception as err:
-            self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
+            raise
 
     def clean_up(self):
         super().clean_up()
