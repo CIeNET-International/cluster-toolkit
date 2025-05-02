@@ -18,6 +18,7 @@ import time
 import unittest
 from ssh import SSHManager
 from deployment import Deployment
+from tenacity import retry, wait_fixed, stop_after_delay
 
 class Test(unittest.TestCase):  # Inherit from unittest.TestCase
     def __init__(self, deployment):
@@ -35,7 +36,8 @@ class Test(unittest.TestCase):  # Inherit from unittest.TestCase
         self.addCleanup(self.clean_up)
         self.deployment.deploy()
         # time.sleep(120)
-        # abrstractor implemnet setUp (below)
+        self.ready() # abrstractor implemnet ready (below)
+
     def ready(self):
         pass
 
@@ -54,15 +56,35 @@ class SlurmTest(Test):
         self.ssh_manager.close()
 
     def setUp(self):
-        #retry after every 5 / 10 secs till 120 s
         try:
             super().setUp()
             hostname = self.get_login_node()
             self.ssh(hostname)
         except Exception as err:
             self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
+
+    #retry after every 5 / 10 secs till 120 s
+    @retry(wait=wait_fixed(10), stop=stop_after_delay(120))
     def ready(self):
-        return 
+        try:
+            hostname = self.get_login_node()
+            self.ssh(hostname)
+            cmd = "sinfo --noheader -o '%P %a %T'"
+            stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
+            output = stdout.read().decode().splitlines()
+
+            for line in output:
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                avail = parts[1].lower()  # e.g. , "up" 
+                state = parts[2].lower() # e.g. , "idle~" 
+                
+                # Check if it's "up", anything else means not fully ready
+                if avail != "up" or state != "idle~":
+                    raise Exception(f"Partition not ready: {line}")  # triggers retry
+        except Exception as err:
+            self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
 
     def clean_up(self):
         super().clean_up()
