@@ -131,6 +131,17 @@ Refer to [Service Launcher Instructions](examples/simple_service_launcher/README
 > Careful review and modification are strongly advised before using them in production or for non-demonstration
 > tasks.
 
+### Simple Ipynb Launcher
+The Simple Ipynb Launcher has a Jupyter Notebook that allows user interact with the AlphaFold 3 data pipeline or/and inference operation.
+
+Refer to [Ipynb Launcher Instructions](examples/simple_ipynb_launcher/README.md) for more details.
+
+> [!WARNING]
+> While these launchers illustrate potential user workflows, they are intended for demonstration purposes only.
+> Careful review and modification are strongly advised before using them in production or for non-demonstration
+> tasks.
+
+
 ## Costs
 > [!WARNING]
 > Installing this blueprint uses the following billable components of Google
@@ -140,6 +151,8 @@ Refer to [Service Launcher Instructions](examples/simple_service_launcher/README
 > - Google Compute Engine
 > - Google Cloud Build
 > - Google Artifact Registry
+> - Google Secret Manager
+> - Google Vertex AI Workbench
 >
 > To avoid continued billing after use, closely follow the
 > [teardown instructions](#teardown-instructions).
