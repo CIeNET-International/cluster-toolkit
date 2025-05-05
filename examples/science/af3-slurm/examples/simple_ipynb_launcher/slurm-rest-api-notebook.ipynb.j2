@@ -218,8 +218,8 @@
       "    \"partition\": \"{{ default_datapipeline_partition_name }}\",\n",
       "    \"current_working_directory\": \"{{ working_directory }}\",\n",
       "    \"time_limit\": \"{{ default_datapipeline_timeout }}\",\n",
-      "    \"memory_per_node\": \"{{ default_datapipeline_memory }}\",\n",
-      "    \"cpus_per_task\": \"{{ default_datapipeline_cpu_count }}\",\n",
+      "    \"memory_per_node\": \"{{ default_datapipeline_memory }}G\",\n",
+      "    \"cpus_per_task\": {{ default_datapipeline_cpu_count }},\n",
       "    \"environment\": [\n",
       "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
       "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
@@ -227,10 +227,10 @@
       "}\n",
       "\n",
       "# Submit job\n",
-      "# Assign `input_file` with datapipeline input file path\n",
+      "# Assign `input_file` with datapipeline input file absolute path\n",
       "input_file= \"\"\n",
       "submit_job_response = client.submit_data_pipeline_job(job_config, input_file)\n",
-      "print(\"Submit Job Response:\", submit_job_response)"
+      "print(\"Submit Job Response:\", json.dumps(submit_job_response,indent=4))"
    ]
   },
   {
@@ -256,8 +256,9 @@
       "    \"partition\": \"{{ default_inference_partition_name }}\",\n",
       "    \"current_working_directory\": \"{{ working_directory }}\",\n",
       "    \"time_limit\": \"{{ default_inference_timeout }}\",\n",
-      "    \"memory_per_node\": \"{{ default_inference_memory }}\",\n",
-      "    \"cpus_per_task\": \"{{ default_inference_cpu_count }}\",\n",
+      "    \"memory_per_node\": \"{{ default_inference_memory }}G\",\n",
+      "    \"cpus_per_task\": {{ default_inference_cpu_count }},\n",
+      "    \"tres_per_job\": \"gres/gpu:1\", # Enables GPU\n",
       "    \"environment\": [\n",
       "        \"PATH=/bin:/usr/bin/:/usr/local/bin/\",\n",
       "        \"LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib\",\n",
@@ -265,10 +266,10 @@
       "}\n",
       "\n",
       "# Submit job\n",
-      "# Assign `input_file` with inference input file path\n",
+      "# Assign `input_file` with inference input file absolute path\n",
       "input_file = \"\"\n",
       "submit_inference_response = client.submit_inference_job(inference_job_config, input_file)\n",
-      "print(\"Submit Inference Job Response:\", submit_inference_response)"
+      "print(\"Submit Inference Job Response:\", json.dumps(submit_inference_response,indent=4))\n"
    ]
 }
  ],

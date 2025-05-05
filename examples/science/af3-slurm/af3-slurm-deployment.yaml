@@ -20,14 +20,14 @@
 
 vars:
   # Define overall deployment variables
-  deployment_name: mesa0429-af3-slurm         # adjust if necessary
-  project_id: cienet-549295                 # supply existing project id
-  region: us-east1             # supply region with C3D-highmem and GPU capacity
-  zone: us-east1-c                # supply zone with C3D-highmem and GPU capacity
+  deployment_name: af3-slurm         # adjust if necessary
+  project_id:                        # supply existing project id
+  region: us-central1                # supply region with C3D-highmem and GPU capacity
+  zone: us-central1-a                # supply zone with C3D-highmem and GPU capacity
 
   # Required buckets for weights and databases
-  modelweights_bucket: "mesa-af3-bucketfs"            # name of your bucket with af3 model weights
-  database_bucket: "af3-test-bucket"                # name of your bucket with the database files
+  modelweights_bucket:             # name of your bucket with af3 model weights
+  database_bucket:                 # name of your bucket with the database files
 
   # AF3 model - architecture mappings - typically do not need to be modified
   sif_dir: /opt/apps/af3/containers  # default path for the local copy of the container image
@@ -50,7 +50,7 @@ vars:
   af3service_user: af3
 
   # Choose if you want the Slurm REST API Simple Service daemon started
-  af3slurmrestapi_activate: true
+  af3slurmrestapi_activate: false
   af3slurmrestapi_user: af3
 
 

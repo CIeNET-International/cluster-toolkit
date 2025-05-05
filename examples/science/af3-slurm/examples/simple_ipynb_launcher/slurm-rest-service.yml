@@ -83,7 +83,7 @@
 
   - name: Copy predefined script to launch directory
     ansible.builtin.copy:
-      src: /tmp/launch_af3_job.sh.j2
+      src: /tmp/rest_api_launch_af3_job.sh.j2
       dest: "{{ af3_job_template_path }}"
       owner: root
       group: root
