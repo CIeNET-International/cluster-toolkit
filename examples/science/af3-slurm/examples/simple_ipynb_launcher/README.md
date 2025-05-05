@@ -1,39 +1,39 @@
 # Simple Ipynb Launcher
 
-The Simple Ipynb Launcher is comprised of a Jupyter Notebook script that allows you to upload and submit AlpaFold3 input files ([AlphaFold 3 Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md)) to the Jupyter Notebook, and automates data pipeline and/or inference operation of the AlphaFold 3 blueprint by using SLURM REST API.
-
+The Simple Ipynb Launcher is comprised of a Jupyter Notebook script that allows you to upload and submit AlpaFold3 input files  to the Jupyter Notebook, and automates data pipeline and/or inference operation of the AlphaFold 3 blueprint by using SLURM REST API.
+The Simple Ipynb Launcher consists of a Jupyter Notebook script that enables users to upload and submit AlphaFold 3 input files (see [AlphaFold 3 Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md)) to the notebook. It automates the data pipeline and/or inference operations of the AlphaFold 3 blueprint using the SLURM REST API.
 
 ## Launcher Logic
-1.  **Folder sharing:** Mounting bucket as a shared storage folder, allows user to upload input file (datapipeline or inference input data) directly into the notebook.
-2.  **Job Execution:** The job, datapipeline or inference process, is executed on the Slurm partition through SLURM REST API request.
-3.  **Result Storage:** Upon successful completion, the data pipeline or inference outputs are stored in the folder sharing directory within the bucket, allows user to validate the output files.
-4. **Secret Manager:** Upon successful deployment, we will automatically upload a secret token retrieved from Slurm Controller, which will be used by user to operate Slurm REST API operation, into Google Secreat Manager. Allows user sensitive token to be securely saved.
+1.  **Folder sharing:** Mounts a bucket as a shared storage folder, allowing users to upload input files (for data pipeline or inference) directly to the notebook.
+2.  **Job Execution:** The data pipeline or inference job is executed on the SLURM partition via a SLURM REST API request.
+3.  **Result Storage:** Upon successful completion, the outputs are stored in the shared folder within the bucket, enabling users to validate the result files.
+4. **Secret Manager:** After deployment, a secret token retrieved from the SLURM Controller is automatically uploaded to Google Secret Manager. This securely stores the token required for SLURM REST API operations.
+
 
 ## Getting started
-The Simple Ipynb Launcher is preinstalled by the AlphaFold 3 solution if you set `af3slurmrestapi_activate` as `true` . It enables you to upload an input file and submit data pipeline and/or inference process interactively through Jupyter Notebook.
+The Simple Ipynb Launcher is preinstalled with the AlphaFold 3 solution if the `af3slurmrestapi_activate` flag is set to `true`. It allows users to upload input files and submit data pipeline and/or inference jobs interactively through the Jupyter Notebook.
 
 
 ### Access Jupyter Notebook
 
-After you have finished the deployment of the Alphafold 3 blueprint, you can access Jupyter Notebook from AI Vertex Workbench
-
+After deploying the AlphaFold 3 blueprint, you can access the Jupyter Notebook through AI Vertex Workbench.
 <img src="../../adm/ipynb_launcher/workbench-page.png" alt="Jupyter notebook Workbench Page" width="700">
 
-In case the deployment works normally, you will be able to see the notebook with the similar file structure below
+If the deployment is successful and Slurm nodes startup-scripts are finished, you will see the notebook with a file structure similar to the one shown on the Jupyter Notebook Workbench page.
 <img src="../../adm/ipynb_launcher/notebook.png" alt="Jupyter notebook Workbench Page" width="700">
 
 
 ### Assign Slurm Job
 
-After you open the Notebook, you will see different sections with its related information. In the first section, you will be required to install dependencies from `requirements.txt` file which will be used on the next steps. Most of the settings/configurations come from initial blueprint setting.
+When you open the notebook, you’ll find different sections containing relevant information. In the first section, you are required to install dependencies from the requirements.txt file, which the libraries will be used in subsequent steps. Also for the settings and configurations, most of them are derived from the initial blueprint configuration.
 
-For example, there is a `Datapipeline` section which contains payload or settings required to send data pipeline job into working node. 
+For example, the `Datapipeline` section includes the payload and settings needed to send a data pipeline job to the working node.
+
 
 <img src="../../adm/ipynb_launcher/datapipeline.png" alt="Jupyter notebook Workbench Page" width="700">
 
 
-
 ## Custom configuration
 
-It is suggested for user to change the settings on the Notebook from the first time before deployment through blueprint variables. In case there is any changes required, make sure to validate your changes and required resources are available.
+It is recommended that users customize the notebook settings before deployment via blueprint variables. If any changes are required later, ensure they are validated and that all necessary resources are available.
 
