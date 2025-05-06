@@ -112,7 +112,7 @@
     "        data = json.load(f)\n",
     "        print(data)\n",
     "except FileNotFoundError:\n",
-    "    print(\"Can't find token file.\")\n"
+    "    print(\"Can't find slurm info file.\")\n"
    ]
   },
   {
@@ -155,8 +155,8 @@
     "    \"model_dir\": \"{{ model_dir }}\",\n",
     "    \"db_dir\": \"{{ db_dir }}\",\n",
     "    \"pdb_database_path\": \"{{ pdb_database_path }}\",\n",
-    "    \"default_folder\": \"{{ jupyter_bucket_local_mount }}\",\n",
-    "    \"job_template_path\": \"{{ af3_job_template_path }}\",\n",
+    "    \"default_folder\": \"{{ slurm_node_notebook_bucket_local_mount }}\",\n",
+    "    \"job_template_path\": \"{{ af3_job_template_jupyter_path }}\",\n",
     "}\n"
    ]
   },
@@ -168,14 +168,30 @@
    "source": [
     "# Initialize AF3SlurmClient\n",
     "from slurm_client import AF3SlurmClient\n",
-    "client = AF3SlurmClient(remote_host=data[\"external_ip\"],remote_port={{ api_port }}, gcp_project_id=\"{{ project_id }}\", gcp_secret_name=gcp_secret_name, af3_config=af3_config)\n",
+    "client = AF3SlurmClient(remote_host=data[\"hostname\"],remote_port={{ api_port }}, gcp_project_id=\"{{ project_id }}\", gcp_secret_name=gcp_secret_name, af3_config=af3_config)\n",
     "\n",
     "# Example Usage: Ping\n",
     "ping_response = client.ping()\n",
     "print(\"Ping Response:\")\n",
-    "print(json.dumps(ping_response))\n",
+    "print(json.dumps(ping_response,indent=4))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b36dc9c1",
+   "metadata": {},
+   "source": [
+    "## Example Usage: Submit Job"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0365674c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "\n",
-    "# Example Usage: Submit Job\n",
     "# Job configuration\n",
     "job_config = {\n",
     "    \"account\": \"{{ service_user }}\",\n",
@@ -234,6 +250,19 @@
    ]
   },
   {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b6b3804e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "job_id = 1 # Replace with the actual job ID you want to check\n",
+    "# Check job status\n",
+    "job_status_response = client.get_job_info(job_id)\n",
+    "print(\"Job Status Response:\", json.dumps(job_status_response,indent=4))\n"
+   ]
+  },
+  {
    "cell_type": "markdown",
    "metadata": {},
    "source": [
@@ -270,6 +299,19 @@
     "input_file = \"\"\n",
     "submit_inference_response = client.submit_inference_job(inference_job_config, input_file)\n",
     "print(\"Submit Inference Job Response:\", json.dumps(submit_inference_response,indent=4))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5a910ed1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "job_id = 1 # Replace with the actual job ID you want to check\n",
+    "# Check job status\n",
+    "job_status_response = client.get_job_info(job_id)\n",
+    "print(\"Job Status Response:\", json.dumps(job_status_response,indent=4))\n"
    ]
   },
   {

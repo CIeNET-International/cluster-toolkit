@@ -1,3 +1,17 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import requests
 import os
 from google.cloud import secretmanager_v1
@@ -80,9 +94,6 @@ class AF3SlurmClient:
         """Submits a data pipeline job to Slurm server."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         base_dir = f"{job_type}_output"
-        if not is_valid_path(input_file, self.af3_config["default_folder"]):
-            raise ValueError(
-                f"Input file path '{input_file}' is not valid. It should be absolute and start with '{self.af3_config['input_prefix']}'.")
         if output_path is None:
             # Generate a timestamped output path if not provided
             output_path = os.path.join(self.af3_config["default_folder"], base_dir, f"{timestamp}", os.path.splitext(
@@ -94,7 +105,7 @@ class AF3SlurmClient:
         
         file_name = pathlib.Path(input_file).stem
         script_options = {**self.af3_config, ** {
-            "input_path": input_file,
+            "input_path": os.path.join(self.af3_config["default_folder"],input_file),
             "output_path": output_path,
             "job_type": job_type,
             "af3_log_base_dir": os.path.join(self.af3_config["default_folder"],base_dir,f"{timestamp}",file_name,"slurm_logs"),
@@ -129,7 +140,7 @@ class AF3SlurmClient:
             print(f"Error canceling job {job_id} on Slurm: {e}")
             return None
 
-    def get_job(self, job_id):
+    def get_job_info(self, job_id):
         """Retrieves information about a specific job."""
         url = self.__retrieve_url(f"job/{job_id}")
         try:

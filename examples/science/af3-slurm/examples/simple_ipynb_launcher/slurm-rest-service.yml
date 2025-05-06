@@ -20,7 +20,8 @@
     project_id:
     af3slurmrestapi_activate:
     service_user:
-    jupyter_bucket_local_mount:
+    slurm_node_notebook_bucket_local_mount:
+    jupyter_notebook_bucket_local_mount:
     secret_name:
     api_port: 
     sif_dir:
@@ -74,8 +75,8 @@
     start_after: network.target
     working_directory: "/home/{{ service_user }}"
     slurmrestapi_environment: "SLURM_JWT=daemon"
-    af3_job_template_path: "{{ jupyter_bucket_local_mount }}/launch_af3_job.sh.j2"
-
+    af3_job_template_path: "{{ slurm_node_notebook_bucket_local_mount }}/launch_af3_job.sh.j2"
+    af3_job_template_jupyter_path: "{{ jupyter_notebook_bucket_local_mount }}/launch_af3_job.sh.j2"
   tasks:
   - name: Ensure af3slurmrestapi_activate is boolean
     set_fact:
@@ -93,7 +94,7 @@
   - name: Copy predefined library to launch directory
     ansible.builtin.copy:
       src: /tmp/slurm_client.py
-      dest: "{{ jupyter_bucket_local_mount }}/slurm_client.py" # Destination on target
+      dest: "{{ slurm_node_notebook_bucket_local_mount }}/slurm_client.py" # Destination on target
       owner: root
       group: root
       mode: '0755'
@@ -109,10 +110,10 @@
   - name: Create Jupyter Notebook file
     ansible.builtin.template:
       src: /tmp/slurm-rest-api-notebook.ipynb.j2
-      dest: "{{ jupyter_bucket_local_mount }}/slurm-rest-api-notebook.ipynb" # Destination on target
+      dest: "{{ slurm_node_notebook_bucket_local_mount }}/slurm-rest-api-notebook.ipynb" # Destination on target
       owner: root
       group: root
-      mode: '0755' # Make executable
+      mode: '0777' # Make accessible to all users
 
   - name: Create the service file
     copy:
