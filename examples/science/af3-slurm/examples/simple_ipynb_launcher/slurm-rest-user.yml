@@ -19,7 +19,7 @@
     # variables to be set in af3-slurm-deployment.yaml"
     service_user:
     # fixed variables, not intended to be modified
-    working_directory: "/home/{{ service_user }}"
+    user_home: "/home/{{ service_user }}"
 
   tasks:
   - name: Check if service user exists
@@ -30,6 +30,7 @@
   - name: Create service user if it doesn't exist
     user:
       name: "{{ service_user }}"
-      home: "{{ working_directory }}"
+      home: "{{ user_home }}"
       create_home: yes
     when: user_exists.rc != 0
+
