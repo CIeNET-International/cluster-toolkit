@@ -68,17 +68,17 @@ vars:
     machine_type: c3d-highmem-180    # minimal sku to hold databases in in memory file system
     memory: 60
     cpu_count: 8
-    node_count_static: 0            # number of datapipeline nodes; 1 node can run multiple concurrent datapipeline jobs
-    node_count_dynamic: 2           # number of dynamic datapipeline nodes
+    node_count_static: 0             # number of datapipeline nodes; 1 node can run multiple concurrent datapipeline jobs
+    node_count_dynamic: 3            # number of dynamic datapipeline nodes
 
   # Inference Partitions Presets
   inference_g2_partition:
     name: infg2
-    machine_type: g2-standard-12    # g2 with L4 GPUs has 24GB of GPU memory; see README.md for recommendation
+    machine_type: g2-standard-12     # g2 with L4 GPUs has 24GB of GPU memory; see README.md for recommendation
     memory: 46
     cpu_count: 12
-    node_count_static: 0            # number of static inference nodes; 1 GPU = 1 model inference
-    node_count_dynamic: 5           # number of dynamic inference nodes
+    node_count_static: 0             # number of static inference nodes; 1 GPU = 1 model inference
+    node_count_dynamic: 10           # number of dynamic inference nodes
 
   inference_a2_partition:
     name: infa2
@@ -90,11 +90,11 @@ vars:
 
   inference_a2u_partition:
     name: infa2u
-    machine_type: a2-ultragpu-1g    # a2-ultra with A100 GPUs has 80GB of GPU memory
+    machine_type: a2-ultragpu-1g     # a2-ultra with A100 GPUs has 80GB of GPU memory
     memory: 160
     cpu_count: 12
-    node_count_static: 0            # number of static inference nodes; 1 GPU = 1 model inference
-    node_count_dynamic: 2           # number of dynamic inference nodes
+    node_count_static: 0             # number of static inference nodes; 1 GPU = 1 model inference
+    node_count_dynamic: 5           # number of dynamic inference nodes
 
   notebook:
     jupyter_notebook_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /
