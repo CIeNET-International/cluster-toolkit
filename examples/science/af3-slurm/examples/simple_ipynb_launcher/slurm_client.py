@@ -29,7 +29,7 @@ def is_valid_path(input_path: str, expected_prefix: str) -> bool:
 class AF3SlurmClient:
     """An AF3 client for interacting with the Slurm API."""
 
-    def __init__(self, remote_host: str, remote_port: int, gcp_project_id: str, gcp_secret_name: str, af3_config: dict):
+    def __init__(self, remote_host: str, remote_port: int, gcp_project_id: str, gcp_secret_name: str, af3_config: Dict)->None:
         self.base_url = f"http://{remote_host}:{remote_port}/slurm/v0.0.41"
         self.gcp_project_id = gcp_project_id
         self.gcp_secret_name = gcp_secret_name
@@ -52,7 +52,7 @@ class AF3SlurmClient:
             print(f"[ERROR] Failed to retrieve token: {e}")
             raise Exception(f"[ERROR] Failed to retrieve token: {e}")
 
-    def __retrieve_url(self, endpoint):
+    def __retrieve_url(self, endpoint: str)-> str:
         return f"{self.base_url}/{endpoint}"
 
     def ping(self):
@@ -77,7 +77,7 @@ class AF3SlurmClient:
         rendered = template.render(config_options)
         return rendered
 
-    def submit_job(self, job_config: dict, job_command: str):
+    def submit_job(self, job_config: dict, job_command: str)->Optional[Dict]:
         """Submits a job to Slurm server."""
         url = self.__retrieve_url("job/submit")
         submit_input = {"job": job_config, "script": job_command}
@@ -90,7 +90,7 @@ class AF3SlurmClient:
             print(f"Error submitting job to Slurm: {e}")
             return None
 
-    def submit_base_job(self, job_config: dict,job_type:str, input_file: str, output_path: Optional[str] = None):
+    def submit_base_job(self, job_config: dict,job_type:str, input_file: str, output_path: Optional[str] = None)->Optional[Dict]:
         """Submits a data pipeline job to Slurm server."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         base_dir = f"{job_type}_output"
@@ -120,15 +120,15 @@ class AF3SlurmClient:
         return submit_result
 
 
-    def submit_inference_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None):
+    def submit_inference_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None)->Optional[Dict]:
         """Submits an inference job to Slurm server."""
         return self.submit_base_job(job_config, "inference", input_file, output_path)
     
-    def submit_data_pipeline_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None):
+    def submit_data_pipeline_job(self, job_config: dict, input_file: str, output_path: Optional[str] = None)->Optional[Dict]:
         """Submits an data pipeline job to Slurm server."""
         return self.submit_base_job(job_config, "datapipeline", input_file, output_path)
 
-    def cancel_job(self, job_id):
+    def cancel_job(self, job_id)->Optional[Dict]:
         """Cancels a job on the Slurm server."""
         url = self.__retrieve_url(f"job/{job_id}/cancel")
         try:
@@ -140,7 +140,7 @@ class AF3SlurmClient:
             print(f"Error canceling job {job_id} on Slurm: {e}")
             return None
 
-    def get_job_info(self, job_id):
+    def get_job_info(self, job_id)->Optional[Dict]:
         """Retrieves information about a specific job."""
         url = self.__retrieve_url(f"job/{job_id}")
         try:
@@ -152,7 +152,7 @@ class AF3SlurmClient:
             print(f"Error retrieving job {job_id} from Slurm: {e}")
             return None
 
-    def get_all_jobs(self):
+    def get_all_jobs(self)->Optional[Dict]:
         """Retrieves information about all jobs."""
         url = os.path.join(self.base_url, "jobs")
         url = self.__retrieve_url("jobs")
