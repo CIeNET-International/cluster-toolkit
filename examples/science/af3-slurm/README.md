@@ -442,6 +442,11 @@ vars:
   af3service_jobbucket: ""           # set to "" if not used
   af3service_user: af3
 
+  # Choose if you want the Slurm REST API Simple Service daemon started
+  af3slurmrestapi_activate: false
+  af3slurmrestapi_user: af3
+
+
   # Choose Default Datapipeline Partition 
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
   default_datapipeline_timeout: 5400
