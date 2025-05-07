@@ -22,7 +22,7 @@
    "metadata": {},
    "source": [
     "# 🚀 AF3 - System Settings\n",
-    "These settings configure partitions, memory, CPU, and default timeouts. Below are the detailed system settings:"
+    "These settings configure partitions, memory, CPU, and default timeouts. Below are the detailed system settings you can choose to change the `af3_config` on the next section:"
    ]
   },
   {
@@ -133,14 +133,14 @@
     "gcp_secret_name = \"{{ secret_name }}\"\n",
     "# Af3 default config\n",
     "af3_config = {\n",
-    "    \"datapipeline_partition\": \"{{ default_datapipeline_partition_name }}\",\n",
-    "    \"inference_partition\": \"{{ default_inference_partition_name }}\",\n",
-    "    \"datapipeline_memory\": \"{{ default_datapipeline_memory }}\",\n",
-    "    \"inference_memory\": \"{{ default_inference_memory }}\",\n",
-    "    \"datapipeline_cpu_count\": \"{{ default_datapipeline_cpu_count }}\",\n",
-    "    \"inference_cpu_count\": \"{{ default_inference_cpu_count }}\",\n",
-    "    \"datapipeline_timeout\": \"{{ default_datapipeline_timeout }}\",\n",
-    "    \"inference_timeout\": \"{{ default_inference_timeout }}\",\n",
+    "    \"datapipeline_partition\": \"{{ default_datapipeline_partition_name }}\", # Datapipeline partition name\n",
+    "    \"inference_partition\": \"{{ default_inference_partition_name }}\", # Inference partition name\n",
+    "    \"datapipeline_memory\": \"{{ default_datapipeline_memory }}\", # Datapipeline memory\n",
+    "    \"inference_memory\": \"{{ default_inference_memory }}\", # Inference memory\n",
+    "    \"datapipeline_cpu_count\": \"{{ default_datapipeline_cpu_count }}\", # Datapipeline CPU count\n",
+    "    \"inference_cpu_count\": \"{{ default_inference_cpu_count }}\", # Inference CPU count\n",
+    "    \"datapipeline_timeout\": \"{{ default_datapipeline_timeout }}\", # Datapipeline timeout\n",
+    "    \"inference_timeout\": \"{{ default_inference_timeout }}\", # Inference timeout\n",
     "    \"jax_compilation_cache_path\": \"{{ jax_compilation_cache_path }}\",\n",
     "    \"max_template_date\": max_template_date,\n",
     "    \"conformer_max_iterations\": conformer_max_iterations,\n",
@@ -178,7 +178,6 @@
   },
   {
    "cell_type": "markdown",
-   "id": "b36dc9c1",
    "metadata": {},
    "source": [
     "## Example Usage: Submit Job"
@@ -187,7 +186,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "0365674c",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -252,7 +250,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "b6b3804e",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -304,7 +301,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "5a910ed1",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -316,7 +312,6 @@
   },
   {
    "cell_type": "markdown",
-   "id": "6b232147",
    "metadata": {},
    "source": [
     "# 🧬 Structure & PAE Viewer\n",
@@ -326,7 +321,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "6b767809",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -375,7 +369,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "c3025691",
    "metadata": {},
    "outputs": [],
    "source": [
@@ -390,7 +383,6 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "dfa67b5e",
    "metadata": {},
    "outputs": [],
    "source": [
