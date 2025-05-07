@@ -3,7 +3,7 @@
 The Simple ipynb Launcher is a Jupyter Notebook-based interface designed to streamline the process of running AlphaFold 3 jobs through a SLURM-based cluster using the SLURM REST API.
 
 It allows users to:
-* Upload AlphaFold 3 input files (see [AlphaFold 3 Input Documentation](https://github.com/google-deepmind/*alphafold3/blob/main/docs/input.md)),
+* Upload AlphaFold 3 input files (see [AlphaFold 3 Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md)),
 * Launch data pipeline and/or inference jobs, and
 * View and validate output files — all within a Jupyter Notebook environment.
 
@@ -18,16 +18,16 @@ This launcher is automatically included when deploying the AlphaFold 3 blueprint
 
 
 ## How It Works
-1. **Shared Folder Setup**
+1. **Shared Folder Setup:**
 A cloud storage bucket is mounted to the notebook environment as a shared folder. Users upload their input files here.
 
-2. **Job Submission**
+2. **Job Submission:**
 Jobs (either data pipeline or inference) are submitted via SLURM using its REST API interface.
 
-3. **Result Output**
+3. **Result Output:**
 Once a job is completed, results are saved back into the shared folder for easy access and validation.
 
-4. **Secure Token Handling**
+4. **Secure Token Handling:**
 A token required for authenticating with the SLURM REST API is retrieved and automatically stored in Google Secret Manager during deployment. 
 
 
