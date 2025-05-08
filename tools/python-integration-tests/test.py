@@ -67,7 +67,7 @@ class SlurmTest(Test):
         except Exception as err:
             self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
 
-    @retry_with_defaults() 
+    @retry_with_defaults()        
     def ready(self):
         try:
             hostname = self.get_login_node()
