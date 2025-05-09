@@ -26,7 +26,7 @@ this solution provisions an auto-scaling HPC environment. Using the Slurm Worklo
 can dynamically spin up and spin down compute resources for the Datapipeline stage and Inference stage
 respectively and as required by your folding workloads.
 
-<img src="adm/af3-htc-architecture.png" alt="af3-slurm architecture" width="700">
+<img src="adm/AlphaFold-architecture.png" alt="af3-slurm architecture" width="700">
 
 The AlphaFold 3 High Throughput solution maps the Datapipeline and Inference steps to Google Compute Engine
 VM families that give you a **high number of folding executions/$** and that can horizontally scale out.
@@ -60,7 +60,7 @@ GPU at the expense of throughput. See
 [Other Hardware Configurations](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#other-hardware-configurations)
 in the original AlphaFold 3 documentation.
 
-For the two example launchers (see [Examples](#examples)), the solution sets the g2-based partition (infg2) as
+For the three example launchers (see [Examples](#examples)), the solution sets the g2-based partition (infg2) as
 the default since this is the most cost-effective inference platform as long as your sequences fit into the
 available GPU memory. You can change the default in the `af3-slurm-deployment.yaml` file via the variable
 `default_inference_partition`. There currently is no auto-selection of GPUs; see [Known Limitations](#known-limitations).
@@ -109,7 +109,7 @@ but additional customizations to your environment may be necessary.
 
 To illustrate the capability of the solution, we provide a few simple examples that represent
 different ways users may want to interact with the high throughput folding capability.
-At the moment, we include 2 example launchers, which provide basic templates
+At the moment, we include 3 example launchers, which provide basic templates
 for different ways of interacting with the AlphaFold 3 solution:
 
 ### Simple Job Launcher
