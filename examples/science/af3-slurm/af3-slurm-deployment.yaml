@@ -50,7 +50,7 @@ vars:
   af3service_user: af3
 
   # Choose if you want the Slurm REST API Simple Service daemon started
-  af3slurmrestapi_activate: false
+  af3slurmrestapi_activate: true
   af3slurmrestapi_user: af3
 
 
