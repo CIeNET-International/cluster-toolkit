@@ -14,7 +14,7 @@ af3ipynb_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3
 ```
-
+**Important:** We recommend using a Cluster Toolkit version greater than v1.48.0.
 ## Prerequisites
 ### Set up Jobs Bucket
 
@@ -64,7 +64,7 @@ gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
 
    - Locate the specific cell in the notebook dedicated to the data pipeline.
    - **Crucially, copy the exact filename of the JSON file you uploaded in Step 1.**
-   - Paste this filename into the `input_file` within the data pipeline cell. This step ensures the pipeline can access your input data.
+   - Paste this filename into the `input_file` within the data pipeline cell.
    - After updating the filename, run the data pipeline cell. This will process your input data.
 
 **4. Executing the Inference:**
