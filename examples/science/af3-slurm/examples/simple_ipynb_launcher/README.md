@@ -14,7 +14,7 @@ af3ipynb_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3
 ```
-**Important:** We recommend using a Cluster Toolkit version greater than v1.48.0.
+**Important:** We recommend using a Cluster Toolkit version v1.48.0.
 ## Prerequisites
 ### Set up Jobs Bucket
 
