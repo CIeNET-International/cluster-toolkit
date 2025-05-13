@@ -97,7 +97,7 @@ The system will proceed with submitting Slurm API requests only after the approp
    - Copy the exact filename of the JSON file you uploaded in Step 1.
    - Paste this filename into the `input_file` within the data pipeline cell.
    
-      <img src="adm/datapipeline.png" alt="data pipeline" width="1000">
+      <img src="adm/data_pipeline.png" alt="data pipeline" width="1000">
 
    - After updating the filename, run the data pipeline cell. This will process your input data.
    - Check job status:
@@ -112,7 +112,7 @@ The system will proceed with submitting Slurm API requests only after the approp
 
    - Upon successful execution, the inference cell will perform the necessary calculations to predict the 3D structure and generate the PAE (Predicted Alignment Error) matrix.
    - Check job status:
-      <img src="adm/inference_status.png" alt="inference status" width="1000">
+   <img src="adm/inference_status.png" alt="inference status" width="1000">
 
 
 **5. Visualizing the Results:**
@@ -142,12 +142,12 @@ Once a job is completed, results are saved back into the shared folder for easy 
 A token required for authenticating with the SLURM REST API is retrieved and automatically stored in Google Secret Manager during deployment. 
 
 
-## Getting started
+## Getting started (OLD)
 After deploying the AlphaFold 3 blueprint on Vertex AI Workbench, the notebook will be accessible from the workbench interface.
 
 > NOTE: Make sure the SLURM nodes complete their startup scripts before attempting to run jobs. Also have all prerequsite, such as datapipeline `hydration` process is completed
 
-### Access Jupyter Notebook
+### Access Jupyter Notebook (OLD)
 
 Once deployment is complete, open the Jupyter Notebook from the AI Vertex Workbench:
 <img src="adm/workbench-page.png" alt="Jupyter notebook Workbench Page" width="700">
@@ -156,7 +156,7 @@ If the deployment is successful and Slurm nodes startup-scripts are succeed, You
 <img src="adm/ipynb.png" alt="Jupyter notebook Workbench Page" width="700">
 
 
-### Running a Job
+### Running a Job (OLD)
 
 When you open the notebook, you’ll find different sections containing relevant information. 
 1. **Install Dependencies**  
@@ -176,6 +176,6 @@ When you open the notebook, you’ll find different sections containing relevant
 
 You can customize settings via blueprint variables before deployment. If modifications are needed later, ensure:
 
-* All required resources are available,
+* All required resources are available
 * Configuration changes are validated within the notebook before submitting new jobs.
 
