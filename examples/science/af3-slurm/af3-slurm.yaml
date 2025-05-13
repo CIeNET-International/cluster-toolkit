@@ -243,6 +243,7 @@ deployment_groups:
       bandwidth_tier: tier_1_enabled
       allow_automatic_updates: false
       startup_script: $(datapipeline_startup.startup_script)
+      reservation_name: aiden-c3d-highmem-reservation
       advanced_machine_features:
         threads_per_core: null
 
@@ -266,6 +267,7 @@ deployment_groups:
       startup_script: $(inference_startup.startup_script)
       bandwidth_tier: gvnic_enabled
       allow_automatic_updates: false
+      reservation_name: aiden0416-g2-12
       advanced_machine_features:
         threads_per_core: null
 
@@ -277,53 +279,53 @@ deployment_groups:
       partition_name: infg2
       exclusive: false
 
-  - id: inference_a2_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [af3_network]
-    settings:
-      node_count_static: $(vars.inference_a2_partition.node_count_static)
-      node_count_dynamic_max: $(vars.inference_a2_partition.node_count_dynamic)
-      disk_type: pd-balanced
-      disk_size_gb: $(vars.disk_size_gb)
-      instance_image_custom: true
-      machine_type: $(vars.inference_a2_partition.machine_type)
-      startup_script: $(inference_startup.startup_script)
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-      advanced_machine_features:
-        threads_per_core: null
+  # - id: inference_a2_nodeset
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  #   use: [af3_network]
+  #   settings:
+  #     node_count_static: $(vars.inference_a2_partition.node_count_static)
+  #     node_count_dynamic_max: $(vars.inference_a2_partition.node_count_dynamic)
+  #     disk_type: pd-balanced
+  #     disk_size_gb: $(vars.disk_size_gb)
+  #     instance_image_custom: true
+  #     machine_type: $(vars.inference_a2_partition.machine_type)
+  #     startup_script: $(inference_startup.startup_script)
+  #     bandwidth_tier: gvnic_enabled
+  #     allow_automatic_updates: false
+  #     advanced_machine_features:
+  #       threads_per_core: null
 
-  - id: inference_a2_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - inference_a2_nodeset
-    settings:
-      partition_name: infa2
-      exclusive: false
+  # - id: inference_a2_partition
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+  #   use:
+  #   - inference_a2_nodeset
+  #   settings:
+  #     partition_name: infa2
+  #     exclusive: false
 
-  - id: inference_a2u_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [af3_network]
-    settings:
-      node_count_static: $(vars.inference_a2u_partition.node_count_static)
-      node_count_dynamic_max: $(vars.inference_a2u_partition.node_count_dynamic)
-      disk_type: pd-balanced
-      disk_size_gb: $(vars.disk_size_gb)
-      instance_image_custom: true
-      machine_type: $(vars.inference_a2u_partition.machine_type)
-      startup_script: $(inference_startup.startup_script)
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-      advanced_machine_features:
-        threads_per_core: null
+  # - id: inference_a2u_nodeset
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  #   use: [af3_network]
+  #   settings:
+  #     node_count_static: $(vars.inference_a2u_partition.node_count_static)
+  #     node_count_dynamic_max: $(vars.inference_a2u_partition.node_count_dynamic)
+  #     disk_type: pd-balanced
+  #     disk_size_gb: $(vars.disk_size_gb)
+  #     instance_image_custom: true
+  #     machine_type: $(vars.inference_a2u_partition.machine_type)
+  #     startup_script: $(inference_startup.startup_script)
+  #     bandwidth_tier: gvnic_enabled
+  #     allow_automatic_updates: false
+  #     advanced_machine_features:
+  #       threads_per_core: null
 
-  - id: inference_a2u_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - inference_a2u_nodeset
-    settings:
-      partition_name: infa2u
-      exclusive: false
+  # - id: inference_a2u_partition
+  #   source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+  #   use:
+  #   - inference_a2u_nodeset
+  #   settings:
+  #     partition_name: infa2u
+  #     exclusive: false
 
   - id: slurm_login
     source: community/modules/scheduler/schedmd-slurm-gcp-v6-login
@@ -341,8 +343,8 @@ deployment_groups:
     - af3_network
     - datapipeline_c3dhm_partition
     - inference_g2_partition
-    - inference_a2_partition
-    - inference_a2u_partition
+    # - inference_a2_partition
+    # - inference_a2u_partition
     - slurm_login
     - database_bucket
     settings:

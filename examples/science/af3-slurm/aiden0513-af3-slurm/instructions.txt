@@ -1,0 +1,70 @@
+Advanced Deployment Instructions
+================================
+
+Terraform group 'environment' was successfully created in directory aiden0513-af3-slurm/environment
+To deploy, run the following commands:
+
+terraform -chdir=aiden0513-af3-slurm/environment init
+terraform -chdir=aiden0513-af3-slurm/environment validate
+terraform -chdir=aiden0513-af3-slurm/environment apply
+gcluster export-outputs aiden0513-af3-slurm/environment
+
+Terraform group 'build-image-base' was successfully created in directory aiden0513-af3-slurm/build-image-base
+To deploy, run the following commands:
+
+gcluster import-inputs aiden0513-af3-slurm/build-image-base
+terraform -chdir=aiden0513-af3-slurm/build-image-base init
+terraform -chdir=aiden0513-af3-slurm/build-image-base validate
+terraform -chdir=aiden0513-af3-slurm/build-image-base apply
+gcluster export-outputs aiden0513-af3-slurm/build-image-base
+
+Packer group was successfully created in directory aiden0513-af3-slurm/image
+To deploy, run the following commands:
+
+gcluster import-inputs aiden0513-af3-slurm/image
+cd aiden0513-af3-slurm/image/slurm_image
+packer init .
+packer validate .
+packer build .
+cd -
+
+Terraform group 'jupyter_notebook' was successfully created in directory aiden0513-af3-slurm/jupyter_notebook
+To deploy, run the following commands:
+
+gcluster import-inputs aiden0513-af3-slurm/jupyter_notebook
+terraform -chdir=aiden0513-af3-slurm/jupyter_notebook init
+terraform -chdir=aiden0513-af3-slurm/jupyter_notebook validate
+terraform -chdir=aiden0513-af3-slurm/jupyter_notebook apply
+gcluster export-outputs aiden0513-af3-slurm/jupyter_notebook
+
+Terraform group 'cluster' was successfully created in directory aiden0513-af3-slurm/cluster
+To deploy, run the following commands:
+
+gcluster import-inputs aiden0513-af3-slurm/cluster
+terraform -chdir=aiden0513-af3-slurm/cluster init
+terraform -chdir=aiden0513-af3-slurm/cluster validate
+terraform -chdir=aiden0513-af3-slurm/cluster apply
+
+Destroying infrastructure when no longer needed
+===============================================
+
+Automated
+---------
+
+gcluster destroy aiden0513-af3-slurm
+
+Advanced / Manual
+-----------------
+Infrastructure should be destroyed in reverse order of creation:
+
+terraform -chdir=aiden0513-af3-slurm/cluster destroy
+terraform -chdir=aiden0513-af3-slurm/jupyter_notebook destroy
+terraform -chdir=aiden0513-af3-slurm/build-image-base destroy
+terraform -chdir=aiden0513-af3-slurm/environment destroy
+
+Please browse to the Cloud Console to remove VM images produced by Packer.
+If this file is present, the names of images can be read from it:
+
+aiden0513-af3-slurm/image/slurm_image/packer-manifest.json
+
+https://console.cloud.google.com/compute/images
