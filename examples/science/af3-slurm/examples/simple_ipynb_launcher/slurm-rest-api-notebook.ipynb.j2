@@ -143,8 +143,7 @@
    "source": [
     "# Example Usage: Ping\n",
     "ping_response = client.ping()\n",
-    "print(\"Ping Response:\")\n",
-    "print(json.dumps(ping_response,indent=4))"
+    "print(\"Ping Response:\", ping_response.status_code)"
    ]
   },
   {
@@ -179,8 +178,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
+    "# Check datapipeline job status\n",
     "job_id = datapipeline_submit_job_response[\"job_id\"] # Replace with the actual job ID you want to check\n",
-    "# Check job status\n",
     "datapipeline_job_state_response = client.get_job_state(job_id)\n",
     "print(\"Job State Response:\", datapipeline_job_state_response)\n"
    ]
@@ -217,8 +216,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
+    "# Check inference job status\n",
     "job_id = inference_submit_job_response[\"job_id\"] # Replace with the actual job ID you want to check\n",
-    "# Check job status\n",
     "inference_job_state_response = client.get_job_state(job_id)\n",
     "print(\"Job State Response:\", inference_job_state_response)\n"
    ]
