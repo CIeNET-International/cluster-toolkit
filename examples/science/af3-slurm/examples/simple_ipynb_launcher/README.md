@@ -58,25 +58,6 @@ You can check the `/var/log/slurm/setup.log` file on each node to confirm the su
 
 The system will proceed with submitting Slurm API requests only after the appropriate "Done setting up" message is observed on all necessary login and controller nodes. Monitoring these log files allows you to track the initialization process of your cluster.
 
-
-## Launcher Logic
-1.  **Folder sharing:** Mounts a bucket as a shared storage folder, allowing users to upload input files (for data pipeline or inference) directly to the notebook.
-2.  **Job Execution:** The data pipeline or inference job is executed on the SLURM partition via a SLURM REST API request.
-3.  **Result Storage:** Upon successful completion, the outputs are stored in the shared folder within the bucket, enabling users to validate the result files.
-4. **Secret Manager:** After deployment, a secret token retrieved from the SLURM Controller is automatically uploaded to Google Secret Manager. This securely stores the token required for SLURM REST API operations.
-
-## Launcher Logic
-
-The launcher is designed to streamline the end-to-end process of data pipeline and inference without requiring users to manually adjust file paths after the initial data pipeline setup.
-
-Here's how it works:
-- **Secret Manager:** After deployment, a secret token retrieved from the SLURM Controller is automatically uploaded to Google Secret Manager. This securely stores the token required for SLURM REST API operations.
-- **Initial Data Pipeline Input:** For the initial data pipeline process, users will provide the necessary input file paths.
-- **Job Execution:** The data pipeline or inference job is executed on the SLURM partition via a SLURM REST API request. Importantly, there is **no direct mounting of a bucket** between the SLURM nodes and the notebook environment during this execution phase.
-- **Direct Result Upload:** Upon successful completion of either the data pipeline or the inference job, the resulting output files are automatically uploaded directly to the designated bucket.
-
-This approach simplifies the workflow by automating the upload of results to the bucket, removing the necessity for users to manage intermediate file transfers or modify input paths after the initial data pipeline configuration.
-
 ## How It Works (New VERSION)
 
 **1. Uploading the Input Data:**
@@ -107,7 +88,7 @@ This approach simplifies the workflow by automating the upload of results to the
      
      - **Initialize AF3SlurmClient and Test Connection:** The client is initialized, and a "Ping" command is executed to verify the connection to the SLURM REST API. A successful ping response confirms that the communication is working correctly.
      
-      <img src="adm/slurm_rest_api_2.png" alt="slrum rest api" width="1000">
+      <img src="adm/ping.png" alt="slrum rest api" width="1000">
    
    - Ensure all these setup cells run without errors before proceeding.
 
@@ -119,6 +100,9 @@ This approach simplifies the workflow by automating the upload of results to the
       <img src="adm/datapipeline.png" alt="data pipeline" width="1000">
 
    - After updating the filename, run the data pipeline cell. This will process your input data.
+   - Check job status:
+
+      <img src="adm/datapipeline_status.png" alt="data pipeline status" width="1000">
 
 **4. Executing the Inference:**
 
@@ -127,6 +111,9 @@ This approach simplifies the workflow by automating the upload of results to the
    <img src="adm/inference.png" alt="inference" width="1000">
 
    - Upon successful execution, the inference cell will perform the necessary calculations to predict the 3D structure and generate the PAE (Predicted Alignment Error) matrix.
+   - Check job status:
+      <img src="adm/inference_status.png" alt="inference status" width="1000">
+
 
 **5. Visualizing the Results:**
 
