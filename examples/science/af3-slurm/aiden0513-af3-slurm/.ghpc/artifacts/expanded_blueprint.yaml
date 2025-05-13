@@ -1,0 +1,501 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+blueprint_name: af3-slurm
+ghpc_version: v1.48.0-0-gf6bb9cfd2
+vars:
+  af3ipynb_activate: true
+  af3ipynb_bucket: aiden0513ipynb
+  af3ipynb_user: af3ipynb
+  af3service_activate: false
+  af3service_jobbucket: ""
+  af3service_user: af3
+  af3_job_launcher_runner:
+    - destination: /tmp/launch_af3_job.sh.j2
+      source: ((ghpc_stage("examples/simple_job_launcher/launch_af3_job.sh.j2")))
+      type: data
+    - args: (("-e sif_dir=${var.sif_dir} -e db_dir=${var.db_dir} -e model_dir=${var.model_dir} -e pdb_database_path=${var.pdb_database_path} -e jax_compilation_cache_path=${var.jax_compilation_cache_path} -e datapipeline_partition=${var.default_datapipeline_partition.name} -e datapipeline_memory=${var.default_datapipeline_partition.memory} -e datapipeline_cpu_count=${var.default_datapipeline_partition.cpu_count} -e datapipeline_timeout=${var.default_datapipeline_timeout} -e inference_partition=${var.default_inference_partition.name} -e inference_memory=${var.default_inference_partition.memory} -e inference_cpu_count=${var.default_inference_partition.cpu_count} -e inference_timeout=${var.default_inference_timeout} -e max_template_date=${var.max_template_date} -e conformer_max_iterations=${var.conformer_max_iterations} -e num_recycles=${var.num_recycles} -e num_diffusion_samples=${var.num_diffusion_samples} -e num_seeds=${var.num_seeds} -e save_embeddings=${var.save_embeddings}"))
+      destination: af3-job-launcher.yml
+      source: ((ghpc_stage("examples/simple_job_launcher/af3-job-launcher.yml")))
+      type: ansible-local
+  af3_service_runners:
+    - destination: /tmp/af3config.json.j2
+      source: ((ghpc_stage("examples/simple_service_launcher/af3config.json.j2")))
+      type: data
+    - destination: /opt/apps/af3/examples/simple_service_launcher/requirements.txt
+      source: ((ghpc_stage("examples/simple_service_launcher/requirements.txt")))
+      type: data
+    - content: (("#!/bin/bash\ninstall -d /opt/apps/af3/venv\nchown ${var.af3service_user} /opt/apps/af3/venv\nsudo -u ${var.af3service_user} python3 -m venv /opt/apps/af3/venv\nsudo -u ${var.af3service_user} /opt/apps/af3/venv/bin/pip install -r /opt/apps/af3/examples/simple_service_launcher/requirements.txt\nchmod -R 755 /opt/apps/af3/venv\n"))
+      destination: install-service-requirements.sh
+      type: shell
+    - destination: /opt/apps/af3/examples/simple_service_launcher/simple_service_launcher.py
+      source: ((ghpc_stage("examples/simple_service_launcher/simple_service_launcher.py")))
+      type: data
+    - args: (("-e service_user=${var.af3service_user} -e af3service_activate=${var.af3service_activate} -e bucket_name=${var.af3service_jobbucket} -e sif_dir=${var.sif_dir} -e db_dir=${var.db_dir} -e model_dir=${var.model_dir} -e pdb_database_path=${var.pdb_database_path} -e jax_compilation_cache_path=${var.jax_compilation_cache_path} -e datapipeline_partition=${var.default_datapipeline_partition.name} -e datapipeline_memory=${var.default_datapipeline_partition.memory} -e datapipeline_cpu_count=${var.default_datapipeline_partition.cpu_count} -e datapipeline_timeout=${var.default_datapipeline_timeout} -e inference_partition=${var.default_inference_partition.name} -e inference_memory=${var.default_inference_partition.memory} -e inference_cpu_count=${var.default_inference_partition.cpu_count} -e inference_timeout=${var.default_inference_timeout}  -e max_template_date=${var.max_template_date} -e conformer_max_iterations=${var.conformer_max_iterations} -e num_recycles=${var.num_recycles} -e num_diffusion_samples=${var.num_diffusion_samples} -e num_seeds=${var.num_seeds} -e save_embeddings=${var.save_embeddings}"))
+      destination: af3-service.yml
+      source: ((ghpc_stage("examples/simple_service_launcher/af3-service.yml")))
+      type: ansible-local
+    - destination: /tmp/rest_api_launch_af3_job.sh.j2
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/launch_af3_job.sh.j2")))
+      type: data
+  af3_service_user_runner:
+    - args: (("-e service_user=${var.af3service_user}"))
+      destination: af3-user.yml
+      source: ((ghpc_stage("examples/simple_service_launcher/af3-user.yml")))
+      type: ansible-local
+  base_image:
+    family: slurm-gcp-6-8-hpc-rocky-linux-8
+    project: schedmd-slurm-public
+  conformer_max_iterations: ""
+  controller_runners:
+    - args: (("-e modelweights_bucket=${var.modelweights_bucket} -e model_dir=${var.model_dir} -e sif_dir=${var.sif_dir}"))
+      destination: controller.yml
+      source: ((ghpc_stage("adm/controller.yml")))
+      type: ansible-local
+  database_bucket: mesa-af3-bucketfs
+  datapipeline_c3dhm_partition:
+    cpu_count: 8
+    machine_type: c3d-highmem-180
+    memory: 60
+    name: datac3d
+    node_count_dynamic: 3
+    node_count_static: 0
+  datapipeline_runners:
+    - args: (("-e database_bucket=${var.database_bucket} -e db_dir=${var.db_dir}"))
+      destination: datapipeline.yml
+      source: ((ghpc_stage("adm/datapipeline.yml")))
+      type: ansible-local
+  db_dir: /dev/shm/public_databases
+  default_datapipeline_partition: ((var.datapipeline_c3dhm_partition))
+  default_datapipeline_timeout: 5400
+  default_inference_partition: ((var.inference_g2_partition))
+  default_inference_timeout: 3600
+  deployment_name: aiden0513-af3-slurm
+  disk_size_gb: 128
+  image_build_machine_type: n2-standard-16
+  inference_a2u_partition:
+    cpu_count: 12
+    machine_type: a2-ultragpu-1g
+    memory: 160
+    name: infa2u
+    node_count_dynamic: 5
+    node_count_static: 0
+  inference_a2_partition:
+    cpu_count: 12
+    machine_type: a2-highgpu-1g
+    memory: 80
+    name: infa2
+    node_count_dynamic: 5
+    node_count_static: 0
+  inference_g2_partition:
+    cpu_count: 12
+    machine_type: g2-standard-12
+    memory: 46
+    name: infg2
+    node_count_dynamic: 10
+    node_count_static: 0
+  inference_runners:
+    - args: (("-e jax_compilation_cache_path=${var.jax_compilation_cache_path}"))
+      destination: inference.yml
+      source: ((ghpc_stage("adm/inference.yml")))
+      type: ansible-local
+  instance_image:
+    family: (("${var.deployment_name}-slurm-apptainer"))
+    project: ((var.project_id))
+  jax_compilation_cache_path: ""
+  labels:
+    ghpc_blueprint: af3-slurm
+    ghpc_deployment: ((var.deployment_name))
+  login_runners:
+    - args: (("-e database_bucket=${var.database_bucket} -e datapipeline_partition=${var.default_datapipeline_partition.name}"))
+      destination: onetime_prepare_databasebucket.yml
+      source: ((ghpc_stage("adm/onetime_prepare_databasebucket.yml")))
+      type: ansible-local
+  max_template_date: ""
+  model_dir: /opt/apps/af3/models
+  modelweights_bucket: mesa-af3-bucketfs
+  notebook:
+    api_port: 7080
+    jupyter_notebook_bucket_local_mount: /home/jupyter/alphafold
+    machine_type: n1-standard-4
+    secret_name: af3_slurm_api_token_test_1
+  num_diffusion_samples: ""
+  num_recycles: ""
+  num_seeds: ""
+  pdb_database_path: /mnt/databases/v3.0/uncompressed/mmcif_files
+  project_id: cienet-549295
+  region: us-east1
+  save_embeddings: ""
+  sif_dir: /opt/apps/af3/containers
+  slurm_restapi_service_runner:
+    - destination: /tmp/slurm-rest-api-notebook.ipynb.j2
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-api-notebook.ipynb.j2")))
+      type: data
+    - destination: /tmp/slurm_client.py.j2
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/slurm_client.py.j2")))
+      type: data
+    - destination: /tmp/visualization.py
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/visualization.py")))
+      type: data
+    - destination: /tmp/notebook-requirements.txt
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/requirements.txt")))
+      type: data
+    - args: (("-e project_id=${var.project_id} -e service_user=${var.af3ipynb_user} -e jupyter_notebook_bucket_local_mount=${var.notebook.jupyter_notebook_bucket_local_mount} -e af3ipynb_activate=${var.af3ipynb_activate} -e api_port=${var.notebook.api_port} -e secret_name=${var.notebook.secret_name} -e af3ipynb_bucket=${var.af3ipynb_bucket} -e default_datapipeline_partition_name=${var.default_datapipeline_partition.name} -e default_datapipeline_timeout=${var.default_datapipeline_timeout} -e default_inference_partition_name=${var.default_inference_partition.name} -e default_inference_timeout=${var.default_inference_timeout} -e datapipeline_c3dhm_partition_name=${var.datapipeline_c3dhm_partition.name} -e datapipeline_c3dhm_partition_machine_type=${var.datapipeline_c3dhm_partition.machine_type} -e datapipeline_c3dhm_partition_memory=${var.datapipeline_c3dhm_partition.memory} -e datapipeline_c3dhm_partition_cpu_count=${var.datapipeline_c3dhm_partition.cpu_count} -e inference_g2_partition_name=${var.inference_g2_partition.name} -e inference_g2_partition_machine_type=${var.inference_g2_partition.machine_type} -e inference_g2_partition_memory=${var.inference_g2_partition.memory} -e inference_g2_partition_cpu_count=${var.inference_g2_partition.cpu_count} -e inference_a2_partition_name=${var.inference_a2_partition.name} -e inference_a2_partition_machine_type=${var.inference_a2_partition.machine_type} -e inference_a2_partition_memory=${var.inference_a2_partition.memory} -e inference_a2_partition_cpu_count=${var.inference_a2_partition.cpu_count} -e inference_a2u_partition_name=${var.inference_a2u_partition.name} -e inference_a2u_partition_machine_type=${var.inference_a2u_partition.machine_type} -e inference_a2u_partition_memory=${var.inference_a2u_partition.memory} -e inference_a2u_partition_cpu_count=${var.inference_a2u_partition.cpu_count} -e max_template_date=${var.max_template_date} -e conformer_max_iterations=${var.conformer_max_iterations} -e num_recycles=${var.num_recycles} -e num_diffusion_samples=${var.num_diffusion_samples} -e num_seeds=${var.num_seeds} -e save_embeddings=${var.save_embeddings} -e sif_dir=${var.sif_dir} -e model_dir=${var.model_dir} -e db_dir=${var.db_dir} -e pdb_database_path=${var.pdb_database_path} -e jax_compilation_cache_path=${var.jax_compilation_cache_path}"))
+      destination: slurm-rest-service.yml
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-service.yml")))
+      type: ansible-local
+  slurm_restapi_token_runner:
+    - args: (("-e service_user=${var.af3ipynb_user} -e project_id=${var.project_id} -e af3ipynb_activate=${var.af3ipynb_activate} -e secret_name=${var.notebook.secret_name}"))
+      destination: slurm-rest-token.yml
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-token.yml")))
+      type: ansible-local
+  slurm_restapi_user_runner:
+    - args: (("-e service_user=${var.af3ipynb_user}"))
+      destination: slurm-rest-user.yml
+      source: ((ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-user.yml")))
+      type: ansible-local
+  zone: us-east1-c
+deployment_groups:
+  - group: environment
+    terraform_providers:
+      google:
+        source: hashicorp/google
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+      google-beta:
+        source: hashicorp/google-beta
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+    modules:
+      - source: modules/network/vpc
+        kind: terraform
+        id: af3_network
+        outputs:
+          - name: network_id
+          - name: subnetwork
+          - name: subnetwork_name
+            description: Automatically-generated output exported for use by later deployment groups
+            sensitive: true
+          - name: subnetwork_self_link
+            description: Automatically-generated output exported for use by later deployment groups
+            sensitive: true
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+      - source: community/modules/project/service-enablement
+        kind: terraform
+        id: enable_apis
+        settings:
+          gcp_service_list:
+            - cloudresourcemanager.googleapis.com
+            - container.googleapis.com
+            - logging.googleapis.com
+            - notebooks.googleapis.com
+            - compute.googleapis.com
+          project_id: ((var.project_id))
+  - group: build-image-base
+    terraform_providers:
+      google:
+        source: hashicorp/google
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+      google-beta:
+        source: hashicorp/google-beta
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+    modules:
+      - source: modules/scripts/startup-script
+        kind: terraform
+        id: slurm-image-build-script
+        outputs:
+          - name: startup_script
+            description: Automatically-generated output exported for use by later deployment groups
+            sensitive: true
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          runners:
+            - destination: apptainer_image.yml
+              source: ((ghpc_stage("adm/apptainer_image.yml")))
+              type: ansible-local
+  - group: image
+    modules:
+      - source: modules/packer/custom-image
+        kind: packer
+        id: slurm_image
+        use:
+          - slurm-image-build-script
+          - af3_network
+        settings:
+          deployment_name: ((var.deployment_name))
+          disk_size: ((var.disk_size_gb))
+          image_family: ((var.instance_image.family))
+          labels: ((var.labels))
+          machine_type: ((var.image_build_machine_type))
+          omit_external_ip: false
+          project_id: ((var.project_id))
+          source_image_family: ((var.base_image.family))
+          source_image_project_id:
+            - ((var.base_image.project))
+          startup_script: ((module.slurm-image-build-script.startup_script))
+          state_timeout: 15m
+          subnetwork_name: ((module.af3_network.subnetwork_name))
+          zone: ((var.zone))
+  - group: jupyter_notebook
+    terraform_providers:
+      google:
+        source: hashicorp/google
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+      google-beta:
+        source: hashicorp/google-beta
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+    modules:
+      - source: modules/file-system/pre-existing-network-storage
+        kind: terraform
+        id: slurmrestapi_bucket
+        settings:
+          fs_type: gcsfuse
+          local_mount: ((var.notebook.jupyter_notebook_bucket_local_mount))
+          mount_options: defaults,_netdev,implicit_dirs,allow_other,dir_mode=0777,file_mode=777
+          remote_mount: (("gs://${var.af3ipynb_bucket}"))
+      - source: community/modules/compute/notebook
+        kind: terraform
+        id: slurmrestapi_notebook
+        use:
+          - slurmrestapi_bucket
+        settings:
+          deployment_name: ((var.deployment_name))
+          gcs_bucket_path: ((module.slurmrestapi_bucket.network_storage.remote_mount))
+          instance_image:
+            family: tf-latest-cpu
+            project: deeplearning-platform-release
+          labels: ((var.labels))
+          machine_type: ((var.notebook.machine_type))
+          mount_runner: ((module.slurmrestapi_bucket.mount_runner))
+          network_interfaces:
+            - network: ((module.af3_network.network_id))
+              subnet: ((module.af3_network.subnetwork.id))
+          project_id: ((var.project_id))
+          zone: ((var.zone))
+  - group: cluster
+    terraform_providers:
+      google:
+        source: hashicorp/google
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+      google-beta:
+        source: hashicorp/google-beta
+        version: ~> 6.23.0
+        configuration:
+          project: ((var.project_id))
+          region: ((var.region))
+          zone: ((var.zone))
+    modules:
+      - source: modules/file-system/pre-existing-network-storage
+        kind: terraform
+        id: database_bucket
+        settings:
+          fs_type: gcsfuse
+          local_mount: /mnt/databases
+          mount_options: defaults,_netdev,implicit_dirs,allow_other,dir_mode=0555,file_mode=555
+          remote_mount: ((var.database_bucket))
+      - source: modules/scripts/startup-script
+        kind: terraform
+        id: login_startup
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          runners: ((flatten([var.login_runners, var.af3_service_user_runner, var.slurm_restapi_user_runner, var.slurm_restapi_token_runner])))
+      - source: modules/scripts/startup-script
+        kind: terraform
+        id: datapipeline_startup
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          runners: ((flatten([var.datapipeline_runners, var.af3_service_user_runner, var.slurm_restapi_user_runner])))
+      - source: modules/scripts/startup-script
+        kind: terraform
+        id: inference_startup
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          runners: ((flatten([var.inference_runners, var.af3_service_user_runner, var.slurm_restapi_user_runner])))
+      - source: modules/scripts/startup-script
+        kind: terraform
+        id: controller_startup
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          runners: ((flatten([var.controller_runners, var.af3_job_launcher_runner, var.af3_service_user_runner, var.af3_service_runners, var.slurm_restapi_user_runner, var.slurm_restapi_service_runner])))
+      - source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+        kind: terraform
+        id: datapipeline_c3dhm_nodeset
+        use:
+          - af3_network
+        settings:
+          advanced_machine_features:
+            threads_per_core: null
+          allow_automatic_updates: false
+          bandwidth_tier: tier_1_enabled
+          disk_size_gb: ((var.disk_size_gb))
+          disk_type: pd-balanced
+          instance_image: ((var.instance_image))
+          instance_image_custom: true
+          labels: ((var.labels))
+          machine_type: ((var.datapipeline_c3dhm_partition.machine_type))
+          name: datapipeline_c3dhm_nodeset
+          node_count_dynamic_max: ((var.datapipeline_c3dhm_partition.node_count_dynamic))
+          node_count_static: ((var.datapipeline_c3dhm_partition.node_count_static))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          reservation_name: aiden-c3d-highmem-reservation
+          startup_script: ((module.datapipeline_startup.startup_script))
+          subnetwork_self_link: ((module.af3_network.subnetwork_self_link))
+          zone: ((var.zone))
+      - source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+        kind: terraform
+        id: datapipeline_c3dhm_partition
+        use:
+          - datapipeline_c3dhm_nodeset
+        settings:
+          exclusive: false
+          nodeset: ((flatten([module.datapipeline_c3dhm_nodeset.nodeset])))
+          partition_name: datac3d
+      - source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+        kind: terraform
+        id: inference_g2_nodeset
+        use:
+          - af3_network
+        settings:
+          advanced_machine_features:
+            threads_per_core: null
+          allow_automatic_updates: false
+          bandwidth_tier: gvnic_enabled
+          disk_size_gb: ((var.disk_size_gb))
+          disk_type: pd-balanced
+          instance_image: ((var.instance_image))
+          instance_image_custom: true
+          labels: ((var.labels))
+          machine_type: ((var.inference_g2_partition.machine_type))
+          name: inference_g2_nodeset
+          node_count_dynamic_max: ((var.inference_g2_partition.node_count_dynamic))
+          node_count_static: ((var.inference_g2_partition.node_count_static))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          reservation_name: aiden0416-g2-12
+          startup_script: ((module.inference_startup.startup_script))
+          subnetwork_self_link: ((module.af3_network.subnetwork_self_link))
+          zone: ((var.zone))
+      - source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+        kind: terraform
+        id: inference_g2_partition
+        use:
+          - inference_g2_nodeset
+        settings:
+          exclusive: false
+          nodeset: ((flatten([module.inference_g2_nodeset.nodeset])))
+          partition_name: infg2
+      - source: community/modules/scheduler/schedmd-slurm-gcp-v6-login
+        kind: terraform
+        id: slurm_login
+        use:
+          - af3_network
+        settings:
+          disk_size_gb: ((var.disk_size_gb))
+          enable_login_public_ips: true
+          instance_image: ((var.instance_image))
+          instance_image_custom: true
+          labels: ((var.labels))
+          machine_type: n2-standard-4
+          name_prefix: login
+          project_id: ((var.project_id))
+          region: ((var.region))
+          subnetwork_self_link: ((module.af3_network.subnetwork_self_link))
+          zone: ((var.zone))
+      - source: community/modules/scheduler/schedmd-slurm-gcp-v6-controller
+        kind: terraform
+        id: slurm_controller
+        use:
+          - af3_network
+          - datapipeline_c3dhm_partition
+          - inference_g2_partition
+          - slurm_login
+          - database_bucket
+        settings:
+          compute_startup_scripts_timeout: 2000
+          controller_startup_script: ((module.controller_startup.startup_script))
+          controller_startup_scripts_timeout: 2000
+          deployment_name: ((var.deployment_name))
+          disk_size_gb: ((var.disk_size_gb))
+          enable_external_prolog_epilog: true
+          instance_image: ((var.instance_image))
+          instance_image_custom: true
+          labels: ((var.labels))
+          login_nodes: ((flatten([module.slurm_login.login_nodes])))
+          login_startup_script: ((module.login_startup.startup_script))
+          login_startup_scripts_timeout: 2000
+          machine_type: c2-standard-8
+          network_storage: ((flatten([module.database_bucket.network_storage])))
+          nodeset: ((flatten([module.inference_g2_partition.nodeset, flatten([module.datapipeline_c3dhm_partition.nodeset])])))
+          nodeset_dyn: ((flatten([module.inference_g2_partition.nodeset_dyn, flatten([module.datapipeline_c3dhm_partition.nodeset_dyn])])))
+          nodeset_tpu: ((flatten([module.inference_g2_partition.nodeset_tpu, flatten([module.datapipeline_c3dhm_partition.nodeset_tpu])])))
+          partitions: ((flatten([module.inference_g2_partition.partitions, flatten([module.datapipeline_c3dhm_partition.partitions])])))
+          project_id: ((var.project_id))
+          region: ((var.region))
+          subnetwork_self_link: ((module.af3_network.subnetwork_self_link))
+          zone: ((var.zone))
+      - source: modules/monitoring/dashboard
+        kind: terraform
+        id: hpc_dashboard
+        outputs:
+          - name: instructions
+        settings:
+          deployment_name: ((var.deployment_name))
+          labels: ((var.labels))
+          project_id: ((var.project_id))
