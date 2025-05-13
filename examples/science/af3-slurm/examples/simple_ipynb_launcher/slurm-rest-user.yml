@@ -34,3 +34,11 @@
       create_home: yes
     when: user_exists.rc != 0
 
+  - name: Ensure correct ownership and permissions on the home directory
+    file:
+      path: "{{ user_home }}"
+      state: directory
+      owner: "{{ service_user }}"
+      group: "{{ service_user }}"
+      mode: '0777'
+      recurse: yes
