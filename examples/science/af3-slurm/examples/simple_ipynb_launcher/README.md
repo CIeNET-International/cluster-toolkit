@@ -7,7 +7,27 @@ It allows users to:
 * Launch data pipeline and/or inference jobs, and
 * View and validate output files — all within a Jupyter Notebook environment.
 
-To enable and start the Slurm REST API Simple Service, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
+## Prerequisites
+### Set up Jobs Bucket
+
+If you want to use the simple service launcher, you need to create an additional bucket, that should
+be located in the region where you stand up your cluster:
+
+```bash
+#!/bin/bash
+
+UNIQUE_JOB_BUCKET=<your-bucket>
+PROJECT_ID=<your-gcp-project>
+REGION=<your-preferred-region>
+
+gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
+    --project=${PROJECT_ID} \
+    --default-storage-class=STANDARD --location=${REGION} \
+    --uniform-bucket-level-access
+```
+
+### Activate Ipynb Launcher
+To enable and start the Ipynb Launcher and Slurm REST API Simple Service, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
 
 ```yaml
 af3ipynb_activate: true
@@ -16,7 +36,7 @@ af3ipynb_user: af3ipynb
 ```
 **Important:** We recommend using a Cluster Toolkit version v1.48.0.
 
-## Important Note: Startup Script Completion Before Slurm API Requests
+### Startup Script Completion Before Slurm API Requests
 
 To ensure proper initialization of the cluster, the system is configured to wait for the successful completion of startup scripts on all relevant nodes (including login nodes and controller nodes) before submitting any Slurm API requests.
 
@@ -37,30 +57,25 @@ You can check the `/var/log/slurm/setup.log` file on each node to confirm the su
     This message confirms that the startup script on a controller node has finished its configuration.
 
 The system will proceed with submitting Slurm API requests only after the appropriate "Done setting up" message is observed on all necessary login and controller nodes. Monitoring these log files allows you to track the initialization process of your cluster.
-## Prerequisites
-### Set up Jobs Bucket
 
-If you want to use the simple service launcher, you need to create an additional bucket, that should
-be located in the region where you stand up your cluster:
-
-```bash
-#!/bin/bash
-
-UNIQUE_JOB_BUCKET=<your-bucket>
-PROJECT_ID=<your-gcp-project>
-REGION=<your-preferred-region>
-
-gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
-    --project=${PROJECT_ID} \
-    --default-storage-class=STANDARD --location=${REGION} \
-    --uniform-bucket-level-access
-```
 
 ## Launcher Logic
 1.  **Folder sharing:** Mounts a bucket as a shared storage folder, allowing users to upload input files (for data pipeline or inference) directly to the notebook.
 2.  **Job Execution:** The data pipeline or inference job is executed on the SLURM partition via a SLURM REST API request.
 3.  **Result Storage:** Upon successful completion, the outputs are stored in the shared folder within the bucket, enabling users to validate the result files.
 4. **Secret Manager:** After deployment, a secret token retrieved from the SLURM Controller is automatically uploaded to Google Secret Manager. This securely stores the token required for SLURM REST API operations.
+
+## Launcher Logic
+
+The launcher is designed to streamline the end-to-end process of data pipeline and inference without requiring users to manually adjust file paths after the initial data pipeline setup.
+
+Here's how it works:
+- **Secret Manager:** After deployment, a secret token retrieved from the SLURM Controller is automatically uploaded to Google Secret Manager. This securely stores the token required for SLURM REST API operations.
+- **Initial Data Pipeline Input:** For the initial data pipeline process, users will provide the necessary input file paths.
+- **Job Execution:** The data pipeline or inference job is executed on the SLURM partition via a SLURM REST API request. Importantly, there is **no direct mounting of a bucket** between the SLURM nodes and the notebook environment during this execution phase.
+- **Direct Result Upload:** Upon successful completion of either the data pipeline or the inference job, the resulting output files are automatically uploaded directly to the designated bucket.
+
+This approach simplifies the workflow by automating the upload of results to the bucket, removing the necessity for users to manage intermediate file transfers or modify input paths after the initial data pipeline configuration.
 
 ## How It Works (New VERSION)
 
