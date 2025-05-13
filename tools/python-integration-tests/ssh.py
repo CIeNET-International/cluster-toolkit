@@ -34,14 +34,14 @@ class SSHManager:
             self.ssh_client = None
             self.local_port = None
 
-    # def run_command(self, cmd: str) -> subprocess.CompletedProcess:
-    #     res = subprocess.run(cmd, text=True, check=True, capture_output=True)
+    def run_command(self, cmd: str) -> subprocess.CompletedProcess:
+        res = subprocess.run(cmd, text=True, check=True, capture_output=True)
 
-    def run_command(self, cmd: list) -> subprocess.CompletedProcess:
-        try:
-            return subprocess.run(cmd, text=True, check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Command failed: {' '.join(cmd)}\nstdout: {e.stdout}\nstderr: {e.stderr}") from e
+    # def run_command(self, cmd: list) -> subprocess.CompletedProcess:
+    #     try:
+    #         return subprocess.run(cmd, text=True, check=True, capture_output=True)
+    #     except subprocess.CalledProcessError as e:
+    #         raise RuntimeError(f"Command failed: {' '.join(cmd)}\nstdout: {e.stdout}\nstderr: {e.stderr}") from e
 
 
     def get_available_port(self):
@@ -78,12 +78,11 @@ class SSHManager:
     def get_keypath(self):
         key_path = os.path.expanduser("~/.ssh/google_compute_engine")
         public_key_path = key_path + ".pub"
-
-        if not os.path.exists(key_path) or not os.path.exists(public_key_path):
-            os.makedirs(os.path.dirname(key_path), exist_ok=True)
+        os.makedirs(os.path.dirname(key_path), exist_ok=True)
+        
+        if not os.path.exists(public_key_path):
             self.run_command(["ssh-keygen", "-t", "rsa", "-f", key_path, "-N", ""])
             self.run_command(["gcloud", "compute", "os-login", "ssh-keys", "add", "--key-file", public_key_path, "--ttl", "60m"])
-
         return key_path
 
 

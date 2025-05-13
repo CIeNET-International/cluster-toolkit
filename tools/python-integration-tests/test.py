@@ -21,7 +21,7 @@ from deployment import Deployment
 from tenacity import retry, wait_fixed, stop_after_delay
 
 #retry after every 5 / 10 secs till 120 s
-def retry_with_defaults(delay=10, timeout=120):
+def retry_with_timeout(delay=10, timeout=120):
     return retry(wait=wait_fixed(delay), stop=stop_after_delay(timeout))
 
 class Test(unittest.TestCase):  # Inherit from unittest.TestCase
@@ -39,7 +39,6 @@ class Test(unittest.TestCase):  # Inherit from unittest.TestCase
     def setUp(self):
         self.addCleanup(self.clean_up)
         self.deployment.deploy()
-        # time.sleep(120)
         self.ready() # abrstractor implemnet ready (below)
 
     def ready(self):
@@ -67,7 +66,7 @@ class SlurmTest(Test):
         except Exception as err:
             self.fail(f"Unexpected error encountered. stderr: {err.stderr}")
 
-    @retry_with_defaults()        
+    @retry_with_timeout()        
     def ready(self):
         try:
             hostname = self.get_login_node()
@@ -78,7 +77,7 @@ class SlurmTest(Test):
 
             for line in output:
                 parts = line.split()
-                if len(parts) < 2:
+                if len(parts) < 3:
                     continue
                 avail = parts[1].lower()  # e.g. , "up" 
                 state = parts[2].lower() # e.g. , "idle~" 
