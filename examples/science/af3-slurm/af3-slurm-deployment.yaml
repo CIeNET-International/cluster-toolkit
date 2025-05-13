@@ -49,11 +49,6 @@ vars:
   af3service_jobbucket: ""          # set to "" if not used
   af3service_user: af3
 
-  # Choose if you want the AF3 Ipynb Service daemon started
-  af3ipynb_activate: false
-  af3ipynb_bucket: ""               # set to "" if not used
-  af3ipynb_user: af3ipynb
-
   # Choose Default Datapipeline Partition
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
   default_datapipeline_timeout: 5400
@@ -95,6 +90,11 @@ vars:
     cpu_count: 12
     node_count_static: 0             # number of static inference nodes; 1 GPU = 1 model inference
     node_count_dynamic: 5           # number of dynamic inference nodes
+
+  # Choose if you want the AF3 Ipynb Service daemon started
+  af3ipynb_activate: false
+  af3ipynb_bucket: ""               # set to "" if not used
+  af3ipynb_user: af3ipynb
 
   notebook:
     jupyter_notebook_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /
