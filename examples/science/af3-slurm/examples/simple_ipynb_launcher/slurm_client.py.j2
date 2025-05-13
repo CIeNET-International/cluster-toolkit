@@ -136,7 +136,7 @@ class AF3SlurmClient:
             headers = self.__get_headers()
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-            return response.json()
+            return response
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] pinging Slurm API: {e}")
             return None
@@ -326,7 +326,7 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error canceling job {job_id} on Slurm: {e}")
+            print(f"[ERROR] canceling job {job_id} on Slurm: {e}")
             return None
 
     def get_job_info(self, job_id) -> Optional[Dict]:
@@ -338,7 +338,7 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error retrieving job {job_id} from Slurm: {e}")
+            print(f"[ERROR] retrieving job {job_id} from Slurm: {e}")
             return None    
     
     def get_job_state(self, job_id) -> Optional[str]:
@@ -358,5 +358,5 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error retrieving all jobs from Slurm: {e}")
+            print(f"[ERROR] retrieving all jobs from Slurm: {e}")
             return None
