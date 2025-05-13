@@ -104,70 +104,31 @@ vars:
   - type: ansible-local
     destination: "slurm-rest-user.yml"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-user.yml"))
-    args: "-e service_user=$(vars.af3service_user)"
-
-  slurm_restapi_ip_address_runner:
-  - type: shell
-    destination: /tmp/af3_slurm_api_ip_address.sh
-    content: |
-      #!/bin/bash
-
-      HOSTNAME=\$(curl -s -H "Metadata-Flavor: Google" \
-      "http://metadata.google.internal/computeMetadata/v1/instance/name")
-
-      # Create JSON and write it to a file
-      cat <<EOF > $(vars.notebook.slurm_node_notebook_bucket_local_mount)/slurm_info.json
-      {
-        "hostname": "${HOSTNAME}"
-      }
-      EOF
+    args: "-e service_user=$(vars.af3ipynb_user)"
 
   slurm_restapi_token_runner:
-  - type: shell
-    destination: /tmp/af3_slurm_api_token.sh
-    content: |
-      #!/bin/bash
-      # Assign the username to a variable
-      USERNAME="$(vars.af3slurmrestapi_user)"
-
-      # Assign 1 year lifespan to the token
-      export \$(scontrol token username="${USERNAME}" lifespan=31536000);
-
-      GCP_SECRET_NAME="$(vars.notebook.secret_name)"
-      GCP_PROJECT_ID="$(vars.project_id)"
-
-      echo "Checking if GCP secret '$GCP_SECRET_NAME' exists..."
-      gcloud secrets describe "$GCP_SECRET_NAME" >/dev/null 2>&1
-      SECRET_EXISTS=$?
-
-      if [[ $SECRET_EXISTS -ne 0 ]]; then
-        echo "Secret does not exist. Creating it..."
-        gcloud secrets create "$GCP_SECRET_NAME" --replication-policy="automatic"
-      else
-        echo "Secret already exists."
-      fi
-
-      echo "Saving token to Secret Manager..."
-      echo -n "$SLURM_JWT" | gcloud secrets versions add "$GCP_SECRET_NAME" --data-file=-
-
-      echo "Token saved successfully to Secret Manager as a new version."
-
+  - type: ansible-local
+    destination: "slurm-rest-token.yml"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-token.yml"))
+    args: "-e service_user=$(vars.af3ipynb_user) -e project_id=$(vars.project_id) -e af3ipynb_activate=$(vars.af3ipynb_activate) -e secret_name=$(vars.notebook.secret_name)"
 
   slurm_restapi_service_runner:
   - type: data
     destination: "/tmp/slurm-rest-api-notebook.ipynb.j2"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-api-notebook.ipynb.j2"))
   - type: data
-    destination: "/tmp/slurm_client.py"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm_client.py"))
+    destination: "/tmp/slurm_client.py.j2"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm_client.py.j2"))
   - type: data
-    destination: "$(vars.notebook.slurm_node_notebook_bucket_local_mount)/notebook-requirements.txt"
+    destination: "/tmp/visualization.py"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/visualization.py"))
+  - type: data
+    destination: "/tmp/notebook-requirements.txt"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/requirements.txt"))
   - type: ansible-local
     destination: "slurm-rest-service.yml"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-service.yml"))
-    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.af3slurmrestapi_user) -e af3slurmrestapi_activate=$(vars.af3slurmrestapi_activate) -e api_port=$(vars.notebook.api_port) -e secret_name=$(vars.notebook.secret_name) -e jupyter_notebook_bucket_local_mount=$(vars.notebook.jupyter_notebook_bucket_local_mount) -e slurm_node_notebook_bucket_local_mount=$(vars.notebook.slurm_node_notebook_bucket_local_mount) -e default_datapipeline_partition_name=$(vars.default_datapipeline_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_datapipeline_cpu_count=$(vars.default_datapipeline_partition.cpu_count) -e default_datapipeline_memory=$(vars.default_datapipeline_partition.memory) -e default_inference_partition_name=$(vars.default_inference_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e default_inference_cpu_count=$(vars.default_inference_partition.cpu_count) -e default_inference_memory=$(vars.default_inference_partition.memory) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings) -e sif_dir=$(vars.sif_dir) -e model_dir=$(vars.model_dir) -e db_dir=$(vars.db_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path)"
-         
+    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.af3ipynb_user) -e jupyter_notebook_bucket_local_mount=$(vars.notebook.jupyter_notebook_bucket_local_mount) -e af3ipynb_activate=$(vars.af3ipynb_activate) -e api_port=$(vars.notebook.api_port) -e secret_name=$(vars.notebook.secret_name) -e af3ipynb_bucket=$(vars.af3ipynb_bucket) -e default_datapipeline_partition_name=$(vars.default_datapipeline_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_inference_partition_name=$(vars.default_inference_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings) -e sif_dir=$(vars.sif_dir) -e model_dir=$(vars.model_dir) -e db_dir=$(vars.db_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path)" 
 deployment_groups:
 - group: environment
   modules:
@@ -218,18 +179,18 @@ deployment_groups:
 - group: jupyter_notebook
   modules:
   - id: slurmrestapi_bucket
-    source: community/modules/file-system/cloud-storage-bucket
+    source: modules/file-system/pre-existing-network-storage
     settings:
-      name_prefix: slurmrestapi_bucket
-      random_suffix: true
-      force_destroy: true
+      remote_mount: "gs://$(vars.af3ipynb_bucket)"
       local_mount: $(vars.notebook.jupyter_notebook_bucket_local_mount)
-      mount_options: defaults,_netdev,implicit_dirs,allow_other,file_mode=777,dir_mode=777
+      fs_type: gcsfuse
+      mount_options: defaults,_netdev,implicit_dirs,allow_other,dir_mode=0777,file_mode=777
 
   - id: slurmrestapi_notebook
     source: community/modules/compute/notebook
     use: [slurmrestapi_bucket]
     settings:
+      gcs_bucket_path : "$(slurmrestapi_bucket.network_storage.remote_mount)"
       machine_type: $(vars.notebook.machine_type)
       instance_image: 
         project: "deeplearning-platform-release"
@@ -237,14 +198,6 @@ deployment_groups:
       network_interfaces:
         - network: $(af3_network.network_id)
           subnet: $(af3_network.subnetwork.id)
-
-  - id: slurmrestapi_bucket_file_system
-    source: modules/file-system/pre-existing-network-storage
-    settings:
-      remote_mount: $(slurmrestapi_bucket.gcs_bucket_name)
-      local_mount: $(vars.notebook.slurm_node_notebook_bucket_local_mount)
-      fs_type: gcsfuse
-      mount_options: defaults,_netdev,implicit_dirs,allow_other,dir_mode=0777,file_mode=777
 
 - group: cluster
   modules:
@@ -260,22 +213,22 @@ deployment_groups:
   - id: login_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([slurmrestapi_bucket_file_system.client_install_runner, slurmrestapi_bucket_file_system.mount_runner, vars.login_runners, vars.af3_service_user_runner,vars.slurm_restapi_token_runner]))
+      runners: $(flatten([vars.login_runners, vars.af3_service_user_runner, vars.slurm_restapi_user_runner,vars.slurm_restapi_token_runner]))
 
   - id: datapipeline_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([slurmrestapi_bucket_file_system.client_install_runner, slurmrestapi_bucket_file_system.mount_runner, vars.datapipeline_runners, vars.af3_service_user_runner]))
+      runners: $(flatten([vars.datapipeline_runners, vars.af3_service_user_runner, vars.slurm_restapi_user_runner]))
 
   - id: inference_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([slurmrestapi_bucket_file_system.client_install_runner, slurmrestapi_bucket_file_system.mount_runner, vars.inference_runners, vars.af3_service_user_runner]))
+      runners: $(flatten([vars.inference_runners, vars.af3_service_user_runner, vars.slurm_restapi_user_runner]))
 
   - id: controller_startup
     source: modules/scripts/startup-script
     settings:
-      runners: $(flatten([slurmrestapi_bucket_file_system.client_install_runner, slurmrestapi_bucket_file_system.mount_runner, vars.controller_runners,  vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners, vars.slurm_restapi_user_runner,vars.slurm_restapi_service_runner, vars.slurm_restapi_ip_address_runner]))
+      runners: $(flatten([ vars.controller_runners,  vars.af3_job_launcher_runner, vars.af3_service_user_runner, vars.af3_service_runners, vars.slurm_restapi_user_runner,vars.slurm_restapi_service_runner]))
 
   - id: datapipeline_c3dhm_nodeset
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
@@ -393,7 +346,6 @@ deployment_groups:
     - slurm_login
     - database_bucket
     settings:
-      enable_controller_public_ips: true
       disk_size_gb: $(vars.disk_size_gb)
       machine_type: c2-standard-8
       instance_image_custom: true
