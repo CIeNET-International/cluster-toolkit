@@ -68,7 +68,7 @@ gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
 
    - Begin by uploading your input JSON file containing the necessary data to the Jupyter Notebook environment. You can typically do this using the notebook's file upload functionality.
    
-   <img src="adm/upload_file.png" alt="upload file" width="700">
+   <img src="adm/upload_file.png" alt="upload file" width="400">
 
 
 **2. Running the Setup Cells (including System Configuration and SLURM Initialization):**
