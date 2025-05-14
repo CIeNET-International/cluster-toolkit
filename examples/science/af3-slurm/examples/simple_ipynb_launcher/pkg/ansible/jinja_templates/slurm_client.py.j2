@@ -125,23 +125,24 @@ class AF3SlurmClient:
 
     def __retrieve_slurm_url(self, endpoint: str) -> str:
         return f"{self.slurm_base_url}/{endpoint}"
-    
+
     def __retrieve_slurmdb_url(self, endpoint: str) -> str:
         return f"{self.slurmdb_base_url}/{endpoint}"
 
-    def ping(self):
+    def ping(self) -> Optional[requests.Response]:
         """Pings the Slurm API server."""
         url = self.__retrieve_slurm_url("ping")
         try:
             headers = self.__get_headers()
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-            return response.json()
+            return response
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] pinging Slurm API: {e}")
-            return None
+            raise requests.exceptions.RequestException(
+                f"[ERROR] pinging Slurm API: {e}")
 
-    def _render_template(self, config_options: dict) -> str:
+    def _render_template(self, config_options: Dict) -> str:
         """Renders the Jinja2 template with af3_config values."""
         env = jinja2.Environment(loader=jinja2.FileSystemLoader(
             os.path.dirname(self.af3_config["job_template_path"])))
@@ -150,7 +151,7 @@ class AF3SlurmClient:
         rendered = template.render(config_options)
         return rendered
 
-    def submit_job(self, job_config: dict, script: str) -> Optional[Dict]:
+    def submit_job(self, job_config: Dict, script: str) -> Optional[Dict]:
         """Submits a job to Slurm server."""
         url = self.__retrieve_slurm_url("job/submit")
         submit_input = {"job": job_config, "script": script}
@@ -166,12 +167,12 @@ class AF3SlurmClient:
 
     def submit_base_job(self, job_config: Dict, job_type: str, script_options: Dict, input_file: str, output_dir: Optional[str] = None) -> Optional[Dict]:
         """Submits a data pipeline job to Slurm server."""
-        
+
         updated_script_options = {**self.af3_config, **script_options, ** {
             "remote_input_path": input_file,
             "remote_output_dir": output_dir,
             "remote_bucket_name": self.af3_config["bucket_name"],
-            "input_path": os.path.join(self.af3_config["slurm_node_working_directory"],output_dir,"input_data", input_file),
+            "input_path": os.path.join(self.af3_config["slurm_node_working_directory"], output_dir, "input_data", input_file),
             "output_dir": os.path.join(self.af3_config["slurm_node_working_directory"], output_dir),
             "job_type": job_type,
             "af3_log_base_dir": os.path.join(output_dir, "slurm_logs"),
@@ -197,12 +198,14 @@ class AF3SlurmClient:
         if not output_dir:
             # Generate a timestamped output path if not provided
             file_name = pathlib.Path(input_file).stem
-            output_dir = os.path.join(f"{job_type}_result", file_name, f"{timestamp}")
+            output_dir = os.path.join(
+                f"{job_type}_result", file_name, f"{timestamp}")
 
         inference_model_cif_output_path: Optional[str] = None
         inference_summary_confidences_output_path: Optional[str] = None
         inference_confidences_output_path: Optional[str] = None
         try:
+            sanitised_input_name: Optional[str] = None
             with open(input_file, "r") as f:
                 name = None
                 parser = ijson.parse(f)
@@ -214,16 +217,20 @@ class AF3SlurmClient:
                     raise ValueError("Missing 'name' in input file.")
                 sanitised_input_name = sanitised_name(name)
 
-                inference_model_cif_output_path = os.path.join(
-                    output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
-                inference_summary_confidences_output_path = os.path.join(
-                    output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
-                inference_confidences_output_path = os.path.join(
-                    output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
-
+            inference_model_cif_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
+            inference_summary_confidences_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
+            inference_confidences_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
+        except FileNotFoundError:
+            print(f"[ERROR] Input file '{input_file}' not found.")
+            raise FileNotFoundError(
+                f"[ERROR] Input file '{input_file}' not found.")
         except Exception as e:
             print(f"[ERROR] Error processing input file '{input_file}': {e}")
-            raise e
+            raise Exception(
+                f"[ERROR] Error processing input file '{input_file}': {e}")
 
         job_config = {
             "account": self.af3_config["service_user"],
@@ -271,11 +278,12 @@ class AF3SlurmClient:
             # Generate a timestamped output path if not provided
             file_name = pathlib.Path(input_file).stem
             output_dir = os.path.join(
-               f"{job_type}_result",  file_name, f"{timestamp}"
+                f"{job_type}_result",  file_name, f"{timestamp}"
             )
 
         datapipeline_output_file_path: Optional[str] = None
         try:
+            sanitised_input_name: Optional[str] = None
             with open(input_file, "r") as f:
                 name = None
                 parser = ijson.parse(f)
@@ -285,12 +293,13 @@ class AF3SlurmClient:
                         break
                 if not name:
                     raise ValueError("Missing 'name' in input file.")
-                sanitised_input_name = sanitised_name(name)
-                datapipeline_output_file_path = os.path.join(
-                    output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
+            sanitised_input_name = sanitised_name(name)
+            datapipeline_output_file_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
         except Exception as e:
             print(f"[ERROR] Error processing input file '{input_file}': {e}")
-            raise e
+            raise Exception(
+                f"[ERROR] Error processing input file '{input_file}': {e}")
         job_config = {
             "account": self.af3_config["service_user"],
             "tasks": 1,
@@ -317,7 +326,7 @@ class AF3SlurmClient:
             f"[INFO] Datapipeline output path : {datapipeline_output_file_path}")
         return response
 
-    def cancel_job(self, job_id) -> Optional[Dict]:
+    def cancel_job(self, job_id: int) -> Optional[Dict]:
         """Cancels a job on the Slurm server."""
         url = self.__retrieve_slurm_url(f"job/{job_id}/cancel")
         try:
@@ -326,10 +335,11 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error canceling job {job_id} on Slurm: {e}")
-            return None
+            print(f"[ERROR] canceling job {job_id} on Slurm: {e}")
+            raise requests.exceptions.RequestException(
+                f"[ERROR] canceling job {job_id} on Slurm: {e}")
 
-    def get_job_info(self, job_id) -> Optional[Dict]:
+    def get_job_info(self, job_id: int) -> Optional[Dict]:
         """Retrieves information about a specific job."""
         url = self.__retrieve_slurmdb_url(f"job/{job_id}")
         try:
@@ -338,15 +348,17 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error retrieving job {job_id} from Slurm: {e}")
-            return None    
-    
-    def get_job_state(self, job_id) -> Optional[str]:
+            print(f"[ERROR] retrieving job {job_id} from Slurm: {e}")
+            raise requests.exceptions.RequestException(
+                f"[ERROR] retrieving job {job_id} from Slurm: {e}")
+
+    def get_job_state(self, job_id: int) -> Optional[str]:
         """Retrieves information about a specific job."""
         job_info = self.get_job_info(job_id)
         if not job_info:
             return None
-        job_state = job_info.get("jobs", [])[0].get("state",[])[0]["current"][0]
+        job_state = job_info.get("jobs", [])[0].get(
+            "state", [])[0]["current"][0]
         return job_state
 
     def get_all_jobs(self) -> Optional[Dict]:
@@ -358,5 +370,6 @@ class AF3SlurmClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error retrieving all jobs from Slurm: {e}")
-            return None
+            print(f"[ERROR] retrieving all jobs from Slurm: {e}")
+            return requests.exceptions.RequestException(
+                f"[ERROR] retrieving all jobs from Slurm: {e}")
