@@ -100,7 +100,7 @@ vars:
     destination: /tmp/rest_api_launch_af3_job.sh.j2
     source: $(ghpc_stage("examples/simple_ipynb_launcher/launch_af3_job.sh.j2"))
 
-  # The next two runners are only needed if the Slurm REST API service daemon is wanted
+  # The next three runners are only needed if the Slurm REST API service daemon is wanted
   slurm_restapi_user_runner:
   - type: ansible-local
     destination: slurm-rest-user.yml
