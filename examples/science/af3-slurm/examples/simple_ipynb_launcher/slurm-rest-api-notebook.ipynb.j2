@@ -115,7 +115,8 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "# GCP Secret Name\n",
+    "# GCP Secret Name retrieved from deployment variable\n",
+    "# No changes required to run default settings\n",
     "gcp_secret_name = \"{{ secret_name }}\""
    ]
   },
@@ -161,10 +162,11 @@
    "outputs": [],
    "source": [
     "# Example of how to use SlurmClient to submit datapipeline job\n",
-    "\n",
+    "# Make sure to use the correct partition name that listed on AF3 System setting section\n",
+    "# No changes required to run default settings\n",
     "datapipeline_partition_name = \"{{ default_datapipeline_partition_name }}\"\n",
     "# Assign `input_file` with datapipeline input file path\n",
-    "input_file= \"input_folder/input_file.json\" # Replace with your input file path\n",
+    "input_file= \"\" # Replace with your input file path (relative path from the jupyter notebook directory)\n",
     "datapipeline_submit_job_response = client.submit_data_pipeline_job(\n",
     "    partition_name=datapipeline_partition_name, \n",
     "    input_file=input_file\n",
@@ -179,7 +181,7 @@
    "outputs": [],
    "source": [
     "# Check datapipeline job status\n",
-    "job_id = datapipeline_submit_job_response[\"job_id\"] # Replace with the actual job ID you want to check\n",
+    "job_id = datapipeline_submit_job_response[\"job_id\"]\n",
     "datapipeline_job_state_response = client.get_job_state(job_id)\n",
     "print(\"Job State Response:\", datapipeline_job_state_response)\n"
    ]
@@ -202,7 +204,7 @@
     "# Make sure to use the correct partition name that listed on AF3 System setting section\n",
     "inference_partition_name = \"{{ default_inference_partition_name }}\"\n",
     "# Assign `input_file` with inference input file path\n",
-    "inference_input_file = datapipeline_submit_job_response[\"datapipeline_output_path\"] # Replace with your input file path\n",
+    "inference_input_file = datapipeline_submit_job_response[\"datapipeline_output_path\"]\n",
     "inference_submit_job_response = client.submit_inference_job(\n",
     "    partition_name = inference_partition_name,\n",
     "    input_file = inference_input_file\n",
@@ -217,7 +219,7 @@
    "outputs": [],
    "source": [
     "# Check inference job status\n",
-    "job_id = inference_submit_job_response[\"job_id\"] # Replace with the actual job ID you want to check\n",
+    "job_id = inference_submit_job_response[\"job_id\"]\n",
     "inference_job_state_response = client.get_job_state(job_id)\n",
     "print(\"Job State Response:\", inference_job_state_response)\n"
    ]

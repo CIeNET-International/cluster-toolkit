@@ -1,7 +1,20 @@
+# Copyright 2025 "Google LLC"
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import io
 import json
 import numpy as np
-import Bio
 from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio.PDB.Structure import Structure
 import py3Dmol
@@ -11,7 +24,7 @@ import pandas as pd
 from typing import Dict, Tuple, List
 
 
-def plot_pae_matrix(pae: Dict, token_chain_ids: str) -> None:
+def plot_pae_matrix(pae: np.ndarray, token_chain_ids: str) -> None:
     df = pd.DataFrame(pae)
     fig = px.imshow(df, color_continuous_scale='Viridis',
                     labels={'color': 'PAE'},
@@ -55,7 +68,7 @@ def read_cif_file(file_path: str) -> Tuple[Structure, str]:
     return structure, content
 
 
-def extract_pae_from_json(file_path: str) -> Tuple[np.array, List]:
+def extract_pae_from_json(file_path: str) -> Tuple[np.ndarray, List]:
     with open(file_path, 'r') as file:
         data = json.load(file)
     pae = np.array(data.get('pae', []), dtype=np.float16)
@@ -69,7 +82,6 @@ def show_structure_3d(cif_string: str, width=500, height=400) -> None:
     viewer.setStyle({'cartoon': {'color': 'spectrum'}})
     viewer.zoomTo()
     viewer.show()
-    display(viewer)
 
 
 def extract_summary_confidences_obj(file_path: str) -> Dict:
@@ -93,7 +105,7 @@ def extract_summary_confidences_obj(file_path: str) -> Dict:
 
         return processed_data
     except Exception as e:
-        print(f"Error extracting summary confidence data: {str(e)}")
+        print(f"[ERROR] extracting summary confidence data: {str(e)}")
         return {}  # Return empty dict as fallback
 
 
@@ -109,7 +121,7 @@ def display_summary_data(summary_data: Dict, chain_ids: List) -> None:
                 chain_metrics[key] = dict(zip(chain_ids, values))
             else:
                 print(
-                    f"Warning: The number of values in '{key}' does not match the number of chains.")
+                    f"[WARNING]: The number of values in '{key}' does not match the number of chains.")
 
     # Optionally print the mapped metrics
     for key, val in chain_metrics.items():
