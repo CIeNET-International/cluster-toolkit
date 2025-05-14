@@ -358,7 +358,7 @@ class AF3SlurmClient:
         if not job_info:
             return None
         job_state = job_info.get("jobs", [])[0].get(
-            "state", [])[0]["current"][0]
+            "state", {}).get("current", [])[0]
         return job_state
 
     def get_all_jobs(self) -> Optional[Dict]:
