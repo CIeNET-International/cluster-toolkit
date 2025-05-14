@@ -134,7 +134,7 @@ After the inference step is complete, the notebook should contain sections that 
 
 - **PAE Matrix:** A visual representation of the PAE matrix will likely be displayed, providing insights into the model's confidence in the predicted relative positions of residues.
 
-   <img src="adm/pae.png" alt="PAE" width="1000">
+   <img src="adm/PAE.png" alt="PAE" width="1000">
 
 By following these steps, you can successfully run the end-to-end inference pipeline and visualize the predicted 3D structure and PAE matrix using the provided Jupyter Notebook.
 
