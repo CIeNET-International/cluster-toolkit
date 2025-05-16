@@ -140,7 +140,6 @@ Refer to [Ipynb Launcher Instructions](examples/simple_ipynb_launcher/README.md)
 > Careful review and modification are strongly advised before using them in production or for non-demonstration
 > tasks.
 
-
 ## Costs
 > [!WARNING]
 > Installing this blueprint uses the following billable components of Google
