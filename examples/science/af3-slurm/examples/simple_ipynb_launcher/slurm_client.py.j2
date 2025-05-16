@@ -186,13 +186,19 @@ class AF3SlurmClient:
         print("[INFO] Please wait for the job until finished to see the result output.")
         return submit_result
 
-    def submit_inference_job(self, input_file: str, partition_name: str, output_dir: Optional[str] = None) -> Optional[Dict]:
+    def submit_inference_job(self, input_file: str, partition_name: str, enable_unified_memory: Optional[bool] = None, output_dir: Optional[str] = None) -> Optional[Dict]:
         """Submits an inference job to Slurm server."""
         partition_config = self.PARTITION_CONFIG_MAP.get(partition_name, {})
         if not partition_config:
             raise ValueError(
                 f"Invalid partition name: {partition_name}, should be one of {list(self.PARTITION_CONFIG_MAP.keys())}"
             )
+            
+        if enable_unified_memory is None:
+            # Default to False if not provided
+            enable_unified_memory = False
+        
+        
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         job_type = "inference"
         if not output_dir:
@@ -250,6 +256,7 @@ class AF3SlurmClient:
             "inference_memory": partition_config.get("memory", "4G"),
             # Inference CPU count
             "inference_cpu_count":  str(partition_config.get('cpu_count', 1)),
+            "inference_enable_unified_memory": str(enable_unified_memory).lower(),
         }
         response = self.submit_base_job(
             job_config, job_type, script_options, input_file, output_dir)
