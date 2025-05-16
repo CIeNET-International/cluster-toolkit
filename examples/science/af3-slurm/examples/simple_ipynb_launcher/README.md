@@ -36,7 +36,10 @@ To enable and start the Ipynb Launcher and Slurm REST API Simple Service, ensure
 af3ipynb_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3ipynb
+af3ipynb_inference_enable_unified_memory: false
 ```
+
+`af3ipynb_inference_enable_unified_memory` allow user to enable unified memory on inference process. See AF3 [unified-memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) for more details.
 
 ### Configuring the SLURM REST API Token Secret Name
 
