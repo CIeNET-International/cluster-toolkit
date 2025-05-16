@@ -51,7 +51,7 @@ vars:
   # Set to True to enable unified memory during inference.
   # This is recommended when processing large input data or when running on machines with limited GPU memory.
   # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
-  af3service_enable_inference_unified_memory: false
+  af3service_inference_enable_unified_memory: false
 
   # Choose Default Datapipeline Partition
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
