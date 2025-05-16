@@ -36,9 +36,20 @@ To enable and start the Ipynb Launcher and Slurm REST API Simple Service, ensure
 af3ipynb_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3ipynb
+af3ipynb_inference_enable_unified_memory: false
 ```
 
-**Important:** We recommend using a Cluster Toolkit version v1.48.0.
+`af3ipynb_inference_enable_unified_memory` allow user to enable unified memory on inference process. See AF3 [unified-memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) for more details.
+
+### Configuring the SLURM REST API Token Secret Name
+
+Replace <your-secret-name> with the actual name of a secret you have created in Secret Manager that currently exists without a token value. Alternatively, you can provide the secret name that does not yet exist in Secret Manager. If the specified secret name is new, this blueprint will automatically create it for you.
+
+> This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
+
+```yaml
+secret_name: <your-secret-name>
+```
 
 ### Startup Script Completion Before Slurm API Requests
 
@@ -88,7 +99,7 @@ These cells perform several crucial setup tasks:
 
   <img src="adm/system_setting.png" alt="system setting" width="1000">
 
-- **Understand Science Settings:** These cells define scientific parameters for the model, such as seeds and iterations. Note their initial values (often empty) as they might influence the prediction.
+- **Understand Science Settings:** These cells define scientific parameters for the model, such as seeds and iterations. Leaving them empty will apply AlphaFold’s default settings.
 
   <img src="adm/science_setting.png" alt="science setting" width="1000">
 
