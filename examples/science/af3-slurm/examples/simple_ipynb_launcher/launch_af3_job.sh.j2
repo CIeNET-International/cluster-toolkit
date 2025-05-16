@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 # --- Capture Launch Directory ---
 LAUNCH_DIR=$(pwd)
@@ -24,7 +23,7 @@ DEFAULT_NUM_RECYCLES="{{ num_recycles }}"
 DEFAULT_NUM_DIFFUSION_SAMPLES="{{ num_diffusion_samples }}"
 DEFAULT_NUM_SEEDS="{{ num_seeds }}"
 DEFAULT_SAVE_EMBEDDINGS="{{ save_embeddings }}"
-DEFAULT_INFERENCE_ENABLE_UNIFIED_MEMORY ="{{ inference_enable_unified_memory | default('false') | trim }}"
+DEFAULT_INFERENCE_ENABLE_UNIFIED_MEMORY="{{ inference_enable_unified_memory | default('false') | trim }}"
 
 # --- Fixed Configuration (Set via Ansible Variables) ---
 CONTAINER_IMAGE="{{ sif_dir }}/af3.sif"
@@ -51,7 +50,7 @@ NUM_RECYCLES="${DEFAULT_NUM_RECYCLES}"
 NUM_DIFFUSION_SAMPLES="${DEFAULT_NUM_DIFFUSION_SAMPLES}"
 NUM_SEEDS="${DEFAULT_NUM_SEEDS}"
 SAVE_EMBEDDINGS="${DEFAULT_SAVE_EMBEDDINGS}"
-INFERENCE_ENABLE_UNIFIED_MEMORY="$(DEFAULT_INFERENCE_ENABLE_UNIFIED_MEMORY)"
+INFERENCE_ENABLE_UNIFIED_MEMORY="${DEFAULT_INFERENCE_ENABLE_UNIFIED_MEMORY}"
 
 # --- GCS Download (if REMOTE_INPUT_PATH is provided) ---
 REMOTE_BUCKET_NAME="{{ remote_bucket_name | default('') }}"
