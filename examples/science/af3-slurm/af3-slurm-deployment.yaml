@@ -48,6 +48,10 @@ vars:
   af3service_activate: false
   af3service_jobbucket: "" # set to "" if not used
   af3service_user: af3
+  # Set to True to enable unified memory during inference.
+  # This is recommended when processing large input data or when running on machines with limited GPU memory.
+  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
+  af3service_enable_inference_unified_memory: false
 
   # Choose Default Datapipeline Partition
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
@@ -95,6 +99,10 @@ vars:
   af3ipynb_activate: false
   af3ipynb_bucket: "" # set to "" if not used
   af3ipynb_user: af3ipynb
+  # Set to True to enable unified memory during inference.
+  # This is recommended when processing large input data or when running on machines with limited GPU memory.
+  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
+  af3ipynb_inference_enable_unified_memory: false
 
   notebook:
     jupyter_notebook_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /
