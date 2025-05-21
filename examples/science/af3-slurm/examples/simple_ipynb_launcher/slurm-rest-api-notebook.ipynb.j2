@@ -117,7 +117,46 @@
    "source": [
     "# GCP Secret Name retrieved from deployment variable\n",
     "# No changes required to run default settings\n",
-    "gcp_secret_name = \"{{ secret_name }}\""
+    "\n",
+    "from google.cloud import secretmanager_v1\n",
+    "from google.api_core.exceptions import NotFound\n",
+    "\n",
+    "gcp_secret_name = \"{{ secret_name }}\"\n",
+    "gcp_project_id = \"{{ project_id }}\"\n",
+    "\n",
+    "secret_manager_client = secretmanager_v1.SecretManagerServiceClient()\n",
+    "secret_path = f\"projects/{gcp_project_id}/secrets/{gcp_secret_name}/versions/latest\"\n",
+    "\n",
+    "try:\n",
+    "    response = secret_manager_client.access_secret_version(name=secret_path)\n",
+    "    slurm_rest_api_token = response.payload.data.decode(\"UTF-8\")\n",
+    "    print(\"[INFO] Retrieved token from Secret Manager.\")\n",
+    "except NotFound:\n",
+    "    print(f\"[ERROR] Secret '{gcp_secret_name}' not found.\")\n",
+    "    raise NotFound(\n",
+    "        f\"[ERROR] Secret '{gcp_secret_name}' not found.\")\n",
+    "except Exception as e:\n",
+    "    print(f\"[ERROR] Failed to retrieve token: {e}\")\n",
+    "    raise Exception(f\"[ERROR] Failed to retrieve token: {e}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from libs.slurm_client import AF3SlurmClient\n",
+    "import json\n",
+    "\n",
+    "# Retrieve hostname/remote ip address\n",
+    "# No changes required to run default settings\n",
+    "try:\n",
+    "    with open(\"{{ slurm_info_json_path }}\", \"r\", encoding=\"utf-8\") as f:\n",
+    "        data = json.load(f)\n",
+    "except FileNotFoundError:\n",
+    "    print(\"Can't find slurm info file.\")\n",
+    "    raise FileNotFoundError(\"Can't find slurm info file.\")"
    ]
   },
   {
@@ -127,11 +166,10 @@
    "outputs": [],
    "source": [
     "# Initialize AF3SlurmClient\n",
-    "from libs.slurm_client import AF3SlurmClient\n",
-    "import json\n",
     "client = AF3SlurmClient(\n",
-    "    gcp_project_id=\"{{ project_id }}\", \n",
-    "    gcp_secret_name=gcp_secret_name,\n",
+    "    hostname=data[\"hostname\"],\n",
+    "    port={{ api_port }},\n",
+    "    token=slurm_rest_api_token,\n",
     "    science_settings=science_settings,\n",
     ")"
    ]

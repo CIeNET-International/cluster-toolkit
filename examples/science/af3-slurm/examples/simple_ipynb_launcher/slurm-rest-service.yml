@@ -18,7 +18,7 @@
   vars:
     # variables set in af3-slurm-deployment.yaml
     project_id:
-    af3ipynb_activate:
+    slurm_rest_server_activate:
     service_user:
     af3ipynb_bucket:
     secret_name:
@@ -76,9 +76,9 @@
     slurm_node_working_directory: "/home/{{ service_user }}"
 
   tasks:
-  - name: Ensure af3ipynb_activate is boolean
+  - name: Ensure slurm_rest_server_activate is boolean
     set_fact:
-      activate: "{{ af3ipynb_activate | bool }}"
+      activate: "{{ slurm_rest_server_activate | bool }}"
 
   - name: Run all slurm rest service required operation only if activated
     block:
@@ -133,77 +133,80 @@
         group: root
         mode: '0644'
 
-    - name: Get hostname from GCP metadata
-      uri:
-        url: http://metadata.google.internal/computeMetadata/v1/instance/name
-        method: GET
-        headers:
-          Metadata-Flavor: Google
-        return_content: yes
-      register: gcp_metadata_response
+    - name: Upload files to AF3 Ipynb if bucket is defined and not empty
+      block:
+      - name: Ensure google-cloud-storage Python package is installed
+        ansible.builtin.pip:
+          name: google-cloud-storage
+          state: present
+          extra_args: --upgrade
+        delegate_to: localhost
 
-    - name: Ensure google-cloud-storage Python package is installed
-      ansible.builtin.pip:
-        name: google-cloud-storage
-        state: present
-        extra_args: --upgrade
-      delegate_to: localhost
+      - name: Get public IP address from GCP metadata
+        ansible.builtin.uri:
+          url: http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip
+          method: GET
+          headers:
+            Metadata-Flavor: Google
+          return_content: yes
+        register: gcp_metadata_response
 
-    - name: Save hostname to JSON file and upload to GCS
-      ansible.builtin.copy:
-        dest: /tmp/slurm_info.json
-        content: |
-          {
-            "hostname": "{{ gcp_metadata_response.content }}"
-          }
-        mode: '0644'
+      - name: Save public IP address to JSON file and upload to GCS
+        ansible.builtin.copy:
+          dest: /tmp/slurm_info.json
+          content: |
+            {
+              "hostname": "{{ gcp_metadata_response.content }}"
+            }
+          mode: '0644'
 
-    - name: Upload slurm_info.json to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/slurm_info.json gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
+      - name: Upload slurm_info.json to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/slurm_info.json gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
+        when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0 and activate
 
-    - name: Upload rest_api_launch_af3_job.sh.j2 to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/rest_api_launch_af3_job.sh.j2 gs://{{ af3ipynb_bucket }}/libs/launch_af3_job.sh.j2
+      - name: Upload rest_api_launch_af3_job.sh.j2 to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/rest_api_launch_af3_job.sh.j2 gs://{{ af3ipynb_bucket }}/libs/launch_af3_job.sh.j2
 
-    - name: Upload notebook-requirements.txt to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/notebook-requirements.txt gs://{{ af3ipynb_bucket }}/libs/notebook-requirements.txt
+      - name: Upload notebook-requirements.txt to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/notebook-requirements.txt gs://{{ af3ipynb_bucket }}/libs/notebook-requirements.txt
 
-    - name: Upload visualization.py to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/visualization.py gs://{{ af3ipynb_bucket }}/libs/visualization.py
+      - name: Upload visualization.py to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/visualization.py gs://{{ af3ipynb_bucket }}/libs/visualization.py
 
-    - name: Render slurm_client.py from template locally
-      ansible.builtin.template:
-        src: /tmp/slurm_client.py.j2
-        dest: /tmp/slurm_client.py
+      - name: Render slurm_client.py from template locally
+        ansible.builtin.template:
+          src: /tmp/slurm_client.py.j2
+          dest: /tmp/slurm_client.py
 
-    - name: Upload slurm_client.py to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/slurm_client.py gs://{{ af3ipynb_bucket }}/libs/slurm_client.py
+      - name: Upload slurm_client.py to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/slurm_client.py gs://{{ af3ipynb_bucket }}/libs/slurm_client.py
 
-    - name: Render Jupyter Notebook locally
-      ansible.builtin.template:
-        src: /tmp/slurm-rest-api-notebook.ipynb.j2
-        dest: /tmp/slurm-rest-api-notebook.ipynb
+      - name: Render Jupyter Notebook locally
+        ansible.builtin.template:
+          src: /tmp/slurm-rest-api-notebook.ipynb.j2
+          dest: /tmp/slurm-rest-api-notebook.ipynb
 
-    - name: Upload slurm-rest-api-notebook.ipynb to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/slurm-rest-api-notebook.ipynb gs://{{ af3ipynb_bucket }}/slurm-rest-api-notebook.ipynb
+      - name: Upload slurm-rest-api-notebook.ipynb to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/slurm-rest-api-notebook.ipynb gs://{{ af3ipynb_bucket }}/slurm-rest-api-notebook.ipynb
 
-    - name: Create empty __init__.py file
-      ansible.builtin.file:
-        path: /tmp/__init__.py
-        state: touch
-        mode: '0644'
-        owner: root
-        group: root
+      - name: Create empty __init__.py file
+        ansible.builtin.file:
+          path: /tmp/__init__.py
+          state: touch
+          mode: '0644'
+          owner: root
+          group: root
 
-    - name: Upload empty __init__.py to GCS
-      ansible.builtin.command:
-        cmd: gcloud storage cp /tmp/__init__.py gs://{{ af3ipynb_bucket }}/libs/__init__.py
-
+      - name: Upload empty __init__.py to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/__init__.py gs://{{ af3ipynb_bucket }}/libs/__init__.py
+      when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0
     when: activate
 
   handlers:
