@@ -14,13 +14,10 @@
 
 import requests
 import os
-from google.cloud import secretmanager_v1
-from google.api_core.exceptions import NotFound
 from typing import Optional, Dict, List
 import jinja2
 import datetime
 import pathlib
-import json
 import ijson
 import string
 
@@ -40,7 +37,7 @@ def sanitised_name(name: str) -> str:
 
 class AF3SlurmClient:
     """An AF3 client for interacting with the Slurm API."""
-
+    SLURM_API_VERSION = "v0.0.41"
     PARTITION_CONFIG_MAP: Dict[str, Dict] = {
         "{{ datapipeline_c3dhm_partition_name}}": {
             "cpu_count": {{datapipeline_c3dhm_partition_cpu_count}},
@@ -66,21 +63,12 @@ class AF3SlurmClient:
         "LD_LIBRARY_PATH=/lib/:/lib64/:/usr/local/lib",
     ]
 
-    def __init__(self,  gcp_project_id: str, gcp_secret_name: str, science_settings: Dict) -> None:
+    def __init__(self, hostname: str, port: int, token: str, science_settings: Dict) -> None:
 
-        try:
-            with open("{{ slurm_info_json_path }}", "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except FileNotFoundError:
-            print("Can't find slurm info file.")
-            raise FileNotFoundError("Can't find slurm info file.")
-        remote_host = data["hostname"]
-        remote_port = {{api_port}}
-        slurm_api_version = "v0.0.41"
-        self.slurm_base_url = f"http://{remote_host}:{remote_port}/slurm/{slurm_api_version}"
-        self.slurmdb_base_url = f"http://{remote_host}:{remote_port}/slurmdb/{slurm_api_version}"
-        self.gcp_project_id = gcp_project_id
-        self.gcp_secret_name = gcp_secret_name
+        self.slurm_base_url = f"http://{hostname}:{port}/slurm/{self.SLURM_API_VERSION}"
+        self.slurmdb_base_url = f"http://{hostname}:{port}/slurmdb/{self.SLURM_API_VERSION}"
+        self.token = token
+        
         # Af3 default config
         self.af3_config = {
             "datapipeline_timeout": "{{ default_datapipeline_timeout }}",
@@ -107,21 +95,7 @@ class AF3SlurmClient:
         }
 
     def __get_headers(self) -> Optional[Dict]:
-        client = secretmanager_v1.SecretManagerServiceClient()
-        secret_path = f"projects/{self.gcp_project_id}/secrets/{self.gcp_secret_name}/versions/latest"
-
-        try:
-            response = client.access_secret_version(name=secret_path)
-            token = response.payload.data.decode("UTF-8")
-            print("[INFO] Retrieved token from Secret Manager.")
-            return {"X-SLURM-USER-TOKEN": token}
-        except NotFound:
-            print(f"[ERROR] Secret '{self.gcp_secret_name}' not found.")
-            raise NotFound(
-                f"[ERROR] Secret '{self.gcp_secret_name}' not found.")
-        except Exception as e:
-            print(f"[ERROR] Failed to retrieve token: {e}")
-            raise Exception(f"[ERROR] Failed to retrieve token: {e}")
+        return {"X-SLURM-USER-TOKEN": self.token}
 
     def __retrieve_slurm_url(self, endpoint: str) -> str:
         return f"{self.slurm_base_url}/{endpoint}"
@@ -193,12 +167,11 @@ class AF3SlurmClient:
             raise ValueError(
                 f"Invalid partition name: {partition_name}, should be one of {list(self.PARTITION_CONFIG_MAP.keys())}"
             )
-            
+
         if enable_unified_memory is None:
             # Default to False if not provided
             enable_unified_memory = False
-        
-        
+
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         job_type = "inference"
         if not output_dir:
