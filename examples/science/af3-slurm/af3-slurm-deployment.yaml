@@ -20,7 +20,6 @@
 
 vars:
   # Define overall deployment variables
-  deployment_name: af3-slurm # adjust if necessary
   project_id: # supply existing project id
   region: us-central1 # supply region with C3D-highmem and GPU capacity
   zone: us-central1-a # supply zone with C3D-highmem and GPU capacity
@@ -28,6 +27,11 @@ vars:
   # Required buckets for weights and databases
   modelweights_bucket: # name of your bucket with af3 model weights
   database_bucket: # name of your bucket with the database files
+
+  # Set to True to enable unified memory during inference.
+  # This is recommended when processing large input data or when running on machines with limited GPU memory.
+  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
+  inference_enable_unified_memory: false
 
   # AF3 model - architecture mappings - typically do not need to be modified
   sif_dir: /opt/apps/af3/containers # default path for the local copy of the container image
@@ -48,10 +52,6 @@ vars:
   af3service_activate: false
   af3service_jobbucket: "" # set to "" if not used
   af3service_user: af3
-  # Set to True to enable unified memory during inference.
-  # This is recommended when processing large input data or when running on machines with limited GPU memory.
-  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
-  af3service_inference_enable_unified_memory: false
 
   # Choose Default Datapipeline Partition
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
@@ -95,14 +95,11 @@ vars:
     node_count_static: 0 # number of static inference nodes; 1 GPU = 1 model inference
     node_count_dynamic: 5 # number of dynamic inference nodes
 
-  # Choose if you want the AF3 Ipynb Service daemon started
-  af3ipynb_activate: false
+  slurm_rest_server_activate: true # enable slurm REST API server
+
+  # AF3 Ipynb Service config
   af3ipynb_bucket: "" # set to "" if not used
   af3ipynb_user: af3ipynb
-  # Set to True to enable unified memory during inference.
-  # This is recommended when processing large input data or when running on machines with limited GPU memory.
-  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
-  af3ipynb_inference_enable_unified_memory: false
 
   notebook:
     jupyter_notebook_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /

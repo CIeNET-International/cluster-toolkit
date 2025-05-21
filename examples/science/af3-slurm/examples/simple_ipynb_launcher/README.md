@@ -33,7 +33,7 @@ gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
 To enable and start the Ipynb Launcher and Slurm REST API Simple Service, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
 
 ```yaml
-af3ipynb_activate: true
+slurm_rest_server_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3ipynb
 af3ipynb_inference_enable_unified_memory: false
