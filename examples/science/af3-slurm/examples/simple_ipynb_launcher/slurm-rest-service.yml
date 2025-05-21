@@ -163,7 +163,6 @@
       - name: Upload slurm_info.json to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/slurm_info.json gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
-        when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0 and activate
 
       - name: Upload rest_api_launch_af3_job.sh.j2 to GCS
         ansible.builtin.command:
@@ -207,6 +206,7 @@
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/__init__.py gs://{{ af3ipynb_bucket }}/libs/__init__.py
       when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0
+
     when: activate
 
   handlers:
