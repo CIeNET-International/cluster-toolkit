@@ -158,7 +158,7 @@ To generate a cost estimate based on your projected usage, use the
 ## Known Limitations
 This solution currently has the following known limitations:
 - **Data Pipeline Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
-- **Inference Out-of-memory Condition**: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling unified memory. To do this, set the following variable in `af3-slurm-deployment.yaml`:
+- **Inference Out-of-memory Condition**: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) . To do this, set the following variable in `af3-slurm-deployment.yaml`:
 ```yaml
 inference_enable_unified_memory: true
 ```
