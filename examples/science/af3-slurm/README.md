@@ -457,14 +457,6 @@ vars:
   ... #more settings, consult the file af3-slurm-deployment.yaml
 ```
 
-### Two Options for Configuring Jupyter Notebook and Service Launcher
-We have three YAML files. To use the simple Jupyter notebook launcher and service launcher, follow these steps:
-
-1. Use `af3-slurm-deployment.yaml` together with `af3-slurm.yaml`. Be sure to provide the bucket name in `af3ipynb_bucket`; otherwise, the related settings will not be triggered.
-
-2. Use `af3-slurm-deployment.yaml` with `af3-slurm-ipynb.yaml` to build the Jupyter notebook.
-
-If you only want to use the service launcher, simply deploy `af3-slurm-deployment.yaml` with `af3-slurm.yaml`, and leave `af3ipynb_bucket: ""` empty.
 
 #### Deploy the cluster
 If you want to configure and deploy your cluster in one go, simply type:
@@ -498,14 +490,25 @@ If you modify your configuration but do not touch the image, it may save you tim
 #!/bin/bash
 ./gcluster deploy af3-slurm --auto-approve --skip image  
 ```
-
-**Optional**: You can build a Jupyter notebook to run AlphaFold step-by-step. If you choose to use the Jupyter notebook, make sure to provide a bucket; otherwise, the notebook won't be built. For more details, please refer to the [Simple Ipynb Launcher](examples/simple_ipynb_launcher/README.md).
-
-ensure that the following settings are present in your `af3-slurm-deployment.yaml`:
+### Deploy Jupyter Notebook (Optional)
+You can build a Jupyter notebook to run AlphaFold step-by-step. If you choose to use the Jupyter notebook, make sure to provide a bucket; otherwise, the notebook won't be built.  follow these steps: 
+1. Ensure that the following settings are present in your `af3-slurm-deployment.yaml`:
 
 ```yaml
 af3ipynb_bucket: "<your-bucket-name>"
 ```
+
+2. If you have previously deployed the cluster (follow [Deploy the cluster](#deploy-the-cluster)) and did not provide `af3ipynb_bucket` in `af3-slurm-deployment.yaml`, you will need to deploy a new cluster:
+```bash
+./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm.yaml --auto-approve 
+```
+
+3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
+```bash
+./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm-ipynb.yaml --auto-approve 
+```
+For more details, please refer to the [Simple Ipynb Launcher](examples/simple_ipynb_launcher/README.md).
+
 #### Bootstrapping of the Databases Bucket
 
 As described in section [Prepare Google Cloud Storage Buckets](#prepare-google-cloud-storage-buckets),
