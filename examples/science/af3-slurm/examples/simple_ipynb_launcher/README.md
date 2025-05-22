@@ -106,11 +106,11 @@ These cells perform several crucial setup tasks:
 
 - **Hostname Retrieval:** This cell retrieve SLURM connection details (like hostname/remote IP address) from a local JSON file.
 
-   <img src="adm/retrieve_host.png" alt="slrum rest api" width="1000">
+   <img src="adm/retrieve_host.png" alt="retrieve host" width="1000">
 
 - **Initialize AF3SlurmClient and Test Connection:** The client is initialized, and a "Ping" command is executed to verify the connection to the SLURM REST API. A successful ping response confirms that the communication is working correctly.
 
-   <img src="adm/initialize.png" alt="slrum rest api" width="1000">
+   <img src="adm/initialize.png" alt="initialize" width="1000">
 
 **3. Configuring the Data Pipeline:**
 
