@@ -100,8 +100,6 @@ These cells perform several crucial setup tasks:
 
   <img src="adm/science_setting.png" alt="science setting" width="1000">
 
-<!-- - **Configure SLURM REST API Client:** These cells set up the client for interacting with the SLURM job scheduler, including specifying the GCP secret name for the API token. -->
-
 - **SLURM API Token Retrieval:** This cell outlines how the SLURM REST API token is retrieved from Google Secret Manager.
 
    <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
