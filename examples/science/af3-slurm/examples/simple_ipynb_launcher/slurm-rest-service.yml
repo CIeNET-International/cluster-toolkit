@@ -100,12 +100,11 @@
           ExecReload=/bin/kill -HUP $MAINPID
           User={{ service_user }}
           WorkingDirectory={{ slurm_node_working_directory }}
-
           [Install]
           WantedBy=multi-user.target
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify: Reload systemd
 
     - name: Create /var/log/{{ service_name }} directory
@@ -114,7 +113,7 @@
         state: directory
         owner: "{{ service_user }}"
         group: "{{ service_user }}"
-        mode: '0755'
+        mode: "0755"
 
     - name: Create logrotate configuration
       ansible.builtin.copy:
@@ -131,7 +130,7 @@
           }
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
     - name: Upload files to AF3 Ipynb if bucket is defined and not empty
       block:
@@ -151,30 +150,42 @@
           return_content: yes
         register: gcp_metadata_response
 
-      - name: Save public IP address to JSON file and upload to GCS
+      - name: Save public IP address to JSON file
         ansible.builtin.copy:
           dest: /tmp/slurm_info.json
           content: |
             {
               "hostname": "{{ gcp_metadata_response.content }}"
             }
-          mode: '0644'
+          mode: "0644"
 
       - name: Upload slurm_info.json to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/slurm_info.json gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
+        register: upload_slurm_info
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Upload rest_api_launch_af3_job.sh.j2 to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/rest_api_launch_af3_job.sh.j2 gs://{{ af3ipynb_bucket }}/libs/launch_af3_job.sh.j2
+        register: upload_launch_script
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Upload notebook-requirements.txt to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/notebook-requirements.txt gs://{{ af3ipynb_bucket }}/libs/notebook-requirements.txt
+        register: upload_requirements
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Upload visualization.py to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/visualization.py gs://{{ af3ipynb_bucket }}/libs/visualization.py
+        register: upload_visualization
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Render slurm_client.py from template locally
         ansible.builtin.template:
@@ -184,6 +195,9 @@
       - name: Upload slurm_client.py to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/slurm_client.py gs://{{ af3ipynb_bucket }}/libs/slurm_client.py
+        register: upload_slurm_client
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Render Jupyter Notebook locally
         ansible.builtin.template:
@@ -193,18 +207,37 @@
       - name: Upload slurm-rest-api-notebook.ipynb to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/slurm-rest-api-notebook.ipynb gs://{{ af3ipynb_bucket }}/slurm-rest-api-notebook.ipynb
+        register: upload_notebook
+        ignore_errors: true
+        notify: Handle GCS upload failure
 
       - name: Create empty __init__.py file
         ansible.builtin.file:
           path: /tmp/__init__.py
           state: touch
-          mode: '0644'
+          mode: "0644"
           owner: root
           group: root
 
       - name: Upload empty __init__.py to GCS
         ansible.builtin.command:
           cmd: gcloud storage cp /tmp/__init__.py gs://{{ af3ipynb_bucket }}/libs/__init__.py
+        register: upload_init
+        ignore_errors: true
+        notify: Handle GCS upload failure
+
+      - name: Fail the play if any upload failed
+        ansible.builtin.fail:
+          msg: "❌ One or more file uploads to GCS failed. Check the task output for more details."
+        when: >
+          upload_slurm_info is failed or
+          upload_launch_script is failed or
+          upload_requirements is failed or
+          upload_visualization is failed or
+          upload_slurm_client is failed or
+          upload_notebook is failed or
+          upload_init is failed
+
       when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0
 
     when: activate
@@ -212,12 +245,15 @@
   handlers:
   - name: Reload systemd
     listen: Reload systemd
-    systemd:
+    ansible.builtin.systemd:
       daemon_reload: yes
 
+  - name: Handle GCS upload failure
+    ansible.builtin.debug:
+      msg: "⚠️ Detected a GCS upload failure. Affected file(s) may not be available in the bucket."
   post_tasks:
   - name: Enable and start the service conditionally
-    systemd:
+    ansible.builtin.systemd:
       name: "{{ service_name }}.service"
       enabled: yes
       state: started
