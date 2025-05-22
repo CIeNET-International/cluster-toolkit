@@ -126,9 +126,8 @@ controller-node, not requiring any user interaction with the AlphaFold 3 environ
 
 Refer to [Service Launcher Instructions](examples/simple_service_launcher/README.md) for more details.
 
-
 ### Simple Ipynb Launcher
-The Simple Ipynb Launcher has a Jupyter Notebook that allows user interact with the AlphaFold 3 data pipeline or/and inference operation.
+The Simple Ipynb Launcher has a Jupyter Notebook that allows user interact with the AlphaFold 3 data pipeline and inference operation.
 
 Refer to [Ipynb Launcher Instructions](examples/simple_ipynb_launcher/README.md) for more details.
 
@@ -159,9 +158,11 @@ To generate a cost estimate based on your projected usage, use the
 This solution currently has the following known limitations:
 - **Data Pipeline Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
 - **Inference Out-of-memory Condition**: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) . To do this, set the following variable in `af3-slurm-deployment.yaml`:
+
 ```yaml
 inference_enable_unified_memory: true
 ```
+
 - **Recompute vs Reuse**: The Datapipeline step of the solution is stateless and does not keep track of previously processed inputs. Thus, if previously submitted sequences are submitted again (e.g. with a different ligand), all parts will be recomputed. Mitigation: none needed. But if uses want to benefit from reuse, they can obtain MSA and templates and provide them in the input JSON file for the Inference step.
 
 Limitations of the example launchers:
@@ -446,7 +447,6 @@ vars:
   ... #more settings, consult the file af3-slurm-deployment.yaml
 ```
 
-
 #### Deploy the cluster
 If you want to configure and deploy your cluster in one go, simply type:
 
@@ -479,23 +479,30 @@ If you modify your configuration but do not touch the image, it may save you tim
 #!/bin/bash
 ./gcluster deploy af3-slurm --auto-approve --skip image  
 ```
-### Deploy Jupyter Notebook (Optional)
-You can build a Jupyter notebook to run AlphaFold step-by-step. If you choose to use the Jupyter notebook, make sure to provide a bucket; otherwise, the notebook won't be built.  follow these steps: 
-1. Ensure that the following settings are present in your `af3-slurm-deployment.yaml`:
 
-```yaml
-af3ipynb_bucket: "<your-bucket-name>"
-```
+### (Optional) Deploying a Jupyter Notebook for AlphaFold
 
-2. If you have previously deployed the cluster (follow [Deploy the cluster](#deploy-the-cluster)) and did not provide `af3ipynb_bucket` in `af3-slurm-deployment.yaml`, you will need to deploy a new cluster:
-```bash
-./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm.yaml --auto-approve 
-```
+You can optionally deploy a Jupyter Notebook environment to run AlphaFold step-by-step. This is useful for interactive exploration and making custom modifications to the AlphaFold pipeline.
+
+> **Important:** To enable the Jupyter Notebook deployment, you **must provide a cloud storage bucket**. If no bucket is specified, the notebook environment will not be created.
+
+#### Steps to Deploy
+
+1. Ensure you have provided a valid cloud storage bucket in your `af3-slurm-deployment.yaml`:
+
+    ```yaml
+    af3ipynb_bucket: "<your-pre-existing-bucket-name>"
+    ```
+
+2. If you have already deployed the cluster (see [Deploy the Cluster](#deploy-the-cluster)) **without specifying** the `af3ipynb_bucket` in your `af3-slurm-deployment.yaml` file and now wish to enable the Jupyter Notebook functionality, you must [**tear down the existing cluster**](#teardown-instructions) and [**redeploy a new cluster**](#deploy-the-cluster) with the correct `af3ipynb_bucket` value. Could follow `--skip image` command while deploying to reduce deployment time.
+Note that the Jupyter Notebook will not function properly if added to an already deployed cluster without this configuration.
 
 3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
-```bash
-./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm-ipynb.yaml --auto-approve 
-```
+
+    ```bash
+    ./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm-ipynb.yaml --auto-approve 
+    ```
+
 For more details, please refer to the [Simple Ipynb Launcher](examples/simple_ipynb_launcher/README.md).
 
 #### Bootstrapping of the Databases Bucket
@@ -512,7 +519,6 @@ identify the login VM `[your deployment name]-login-001` and click `SSH` to log 
 Once you are logged in, watch out for messages that the Slurm setup has finished (if not, wait until the
 finish message shows up and follow the instructions to log out and log in again). On the login node
 execute:
-
 
 ```bash
 #!/bin/bash
@@ -558,8 +564,16 @@ reverse order. Leave out the `--auto-approve` if you want control over each depl
 ./gcluster destroy af3-slurm --auto-approve
 ```
 
+### (Optional) Teardown Jupyter Notebook
+
+If you have previously deployed the Jupyter Notebook by following [Deploying a Jupyter Notebook for AlphaFold](#optional-deploying-a-jupyter-notebook-for-alphafold) and would like to tear down the notebook deployment, use the command below.
+
+```bash
+./gcluster destroy af3-slurm-ipynb --auto-approve
+```
+
 > [!WARNING]
-> If you do not destroy all three deployment groups then there may be continued
+> If you do not destroy all three deployment groups and/or the notebook deployment, then there may be continued
 > associated costs. Also, the buckets you may have created via the cloud console or CLI will
 > not be destroyed by the above command (they would be, however, destroyed if you deleted the project).
 > For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
