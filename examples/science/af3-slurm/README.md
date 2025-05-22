@@ -126,10 +126,6 @@ controller-node, not requiring any user interaction with the AlphaFold 3 environ
 
 Refer to [Service Launcher Instructions](examples/simple_service_launcher/README.md) for more details.
 
-> [!WARNING]
-> While these launchers illustrate potential user workflows, they are intended for demonstration purposes only.
-> Careful review and modification are strongly advised before using them in production or for non-demonstration
-> tasks.
 
 ### Simple Ipynb Launcher
 The Simple Ipynb Launcher has a Jupyter Notebook that allows user interact with the AlphaFold 3 data pipeline or/and inference operation.
@@ -161,7 +157,11 @@ To generate a cost estimate based on your projected usage, use the
 
 ## Known Limitations
 This solution currently has the following known limitations:
-- **Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
+- **Data Pipeline Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
+- **Inference Out-of-memory Condition**: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling unified memory. To do this, set the following variable in `af3-slurm-deployment.yaml`:
+```yaml
+inference_enable_unified_memory: true
+```
 - **Recompute vs Reuse**: The Datapipeline step of the solution is stateless and does not keep track of previously processed inputs. Thus, if previously submitted sequences are submitted again (e.g. with a different ligand), all parts will be recomputed. Mitigation: none needed. But if uses want to benefit from reuse, they can obtain MSA and templates and provide them in the input JSON file for the Inference step.
 
 Limitations of the example launchers:
@@ -410,6 +410,11 @@ vars:
   modelweights_bucket:  <YOUR_WEIGHTS_BUCKET_NAME>  # name of your bucket with af3 model weights
   database_bucket: <YOUR_DATABASE_BUCKET_NAME>      # name of your bucket with the database files
 
+  # Set to True to enable unified memory during inference.
+  # This is recommended when processing large input data or when running on machines with limited GPU memory.
+  # Reference: https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory
+  inference_enable_unified_memory: false
+
   # AF3 model - architecture mappings - typically do not need to be modified
   sif_dir: /opt/apps/af3/containers  # default path for the local copy of the container image
   model_dir: /opt/apps/af3/models    # default path for the local copy of the model weights
@@ -426,14 +431,9 @@ vars:
   save_embeddings: ""
 
   # Choose if you want the AF3 Simple Service daemon started
-  af3service_activate: false
+  af3service_activate: true
   af3service_jobbucket: ""           # set to "" if not used
   af3service_user: af3
-
-  # Choose if you want the Slurm REST API Simple Service daemon started
-  af3slurmrestapi_activate: false
-  af3slurmrestapi_user: af3
-
 
   # Choose Default Datapipeline Partition 
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
@@ -446,8 +446,16 @@ vars:
   ... #more settings, consult the file af3-slurm-deployment.yaml
 ```
 
-#### Deploy the cluster
+### Two Options for Configuring Jupyter Notebook and Service Launcher
+We have three YAML files. To use the simple Jupyter notebook launcher and service launcher, follow these steps:
 
+1. Use `af3-slurm-deployment.yaml` together with `af3-slurm.yaml`. Be sure to provide the bucket name in `af3ipynb_bucket`; otherwise, the related settings will not be triggered.
+
+2. Use `af3-slurm-deployment.yaml` with `af3-slurm-ipynb.yaml` to build the Jupyter notebook.
+
+If you only want to use the service launcher, simply deploy `af3-slurm-deployment.yaml` with `af3-slurm.yaml`, and leave `af3ipynb_bucket: ""` empty.
+
+#### Deploy the cluster
 If you want to configure and deploy your cluster in one go, simply type:
 
 ```bash
@@ -480,6 +488,13 @@ If you modify your configuration but do not touch the image, it may save you tim
 ./gcluster deploy af3-slurm --auto-approve --skip image  
 ```
 
+**Optional**: You can build a Jupyter notebook to run AlphaFold step-by-step. If you choose to use the Jupyter notebook, make sure to provide a bucket; otherwise, the notebook won't be built. For more details, please refer to the [Simple Ipynb Launcher](examples/simple_ipynb_launcher/README.md).
+
+ensure that the following settings are present in your `af3-slurm-deployment.yaml`:
+
+```yaml
+af3ipynb_bucket: "<your-bucket-name>"
+```
 #### Bootstrapping of the Databases Bucket
 
 As described in section [Prepare Google Cloud Storage Buckets](#prepare-google-cloud-storage-buckets),
@@ -494,6 +509,7 @@ identify the login VM `[your deployment name]-login-001` and click `SSH` to log 
 Once you are logged in, watch out for messages that the Slurm setup has finished (if not, wait until the
 finish message shows up and follow the instructions to log out and log in again). On the login node
 execute:
+
 
 ```bash
 #!/bin/bash
