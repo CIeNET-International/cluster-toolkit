@@ -30,16 +30,13 @@ gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
 
 ### Activate Ipynb Launcher
 
-To enable and start the Ipynb Launcher and Slurm REST API Simple Service, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
+To start the Simple Ipynb Launcher, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
 
 ```yaml
-slurm_rest_server_activate: true
 af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3ipynb
-af3ipynb_inference_enable_unified_memory: false
 ```
 
-`af3ipynb_inference_enable_unified_memory` allow user to enable unified memory on inference process. See AF3 [unified-memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) for more details.
 
 ### Configuring the SLURM REST API Token Secret Name
 
@@ -48,7 +45,7 @@ Replace <your-secret-name> with the actual name of a secret you have created in 
 > This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
 
 ```yaml
-secret_name: <your-secret-name>
+secret_name: "<your-secret-name>"
 ```
 
 ### Startup Script Completion Before Slurm API Requests
@@ -103,13 +100,19 @@ These cells perform several crucial setup tasks:
 
   <img src="adm/science_setting.png" alt="science setting" width="1000">
 
-- **Configure SLURM REST API Client:** These cells set up the client for interacting with the SLURM job scheduler, including specifying the GCP secret name for the API token.
+<!-- - **Configure SLURM REST API Client:** These cells set up the client for interacting with the SLURM job scheduler, including specifying the GCP secret name for the API token. -->
 
-   <img src="adm/slurm_rest_api.png" alt="slrum rest api" width="1000">
+- **SLURM API Token Retrieval:** This cell outlines how the SLURM REST API token is retrieved from Google Secret Manager.
+
+   <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
+
+- **Hostname Retrieval:** This cell retrieve SLURM connection details (like hostname/remote IP address) from a local JSON file.
+
+   <img src="adm/retrieve_host.png" alt="slrum rest api" width="1000">
 
 - **Initialize AF3SlurmClient and Test Connection:** The client is initialized, and a "Ping" command is executed to verify the connection to the SLURM REST API. A successful ping response confirms that the communication is working correctly.
 
-   <img src="adm/ping.png" alt="slrum rest api" width="1000">
+   <img src="adm/initialize.png" alt="slrum rest api" width="1000">
 
 **3. Configuring the Data Pipeline:**
 
