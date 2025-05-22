@@ -37,7 +37,6 @@ af3ipynb_bucket: "<your-bucket>"
 af3ipynb_user: af3ipynb
 ```
 
-
 ### Configuring the SLURM REST API Token Secret Name
 
 Replace <your-secret-name> with the actual name of a secret you have created in Secret Manager that currently exists without a token value. Alternatively, you can provide the secret name that does not yet exist in Secret Manager. If the specified secret name is new, this blueprint will automatically create it for you.
