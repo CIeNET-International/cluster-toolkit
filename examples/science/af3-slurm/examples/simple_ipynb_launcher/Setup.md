@@ -107,7 +107,7 @@ You can customize settings via blueprint variables before deployment. If modific
 
 ## Teardown Jupyter Notebook
 
-If you have previously deployed the Jupyter Notebook by following [Deploying a Jupyter Notebook for AlphaFold](#optional-deploying-a-jupyter-notebook-for-alphafold) and would like to tear down the notebook deployment, use the command below.
+If you would like to tear down the notebook deployment, use the command below.
 
 ```bash
 ./gcluster destroy af3-slurm-ipynb --auto-approve
