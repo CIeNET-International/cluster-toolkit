@@ -1,4 +1,4 @@
-## How It Works
+# Usage Guide: Step-by-Step Instructions
 
 **1. Uploading the Input Data:**
 
