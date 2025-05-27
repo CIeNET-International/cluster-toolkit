@@ -105,13 +105,13 @@ vars:
   - type: ansible-local
     destination: slurm-rest-user.yml
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-user.yml"))
-    args: -e service_user=$(vars.af3ipynb_user)
+    args: -e service_user=$(vars.slurm_rest_user)
 
   slurm_restapi_token_runner:
   - type: ansible-local
     destination: slurm-rest-token.yml
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-token.yml"))
-    args: "-e service_user=$(vars.af3ipynb_user) -e project_id=$(vars.project_id) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e secret_name=$(vars.notebook.secret_name)"
+    args: "-e service_user=$(vars.slurm_rest_user) -e project_id=$(vars.project_id) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_token_secret_name=$(vars.slurm_rest_token_secret_name)"
 
   slurm_restapi_service_runner:
   - type: data
@@ -129,7 +129,7 @@ vars:
   - type: ansible-local
     destination: slurm-rest-service.yml
     source: $(ghpc_stage("examples/simple_ipynb_launcher/slurm-rest-service.yml"))
-    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.af3ipynb_user) -e jupyter_notebook_bucket_local_mount=$(vars.notebook.jupyter_notebook_bucket_local_mount) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e api_port=$(vars.notebook.api_port) -e secret_name=$(vars.notebook.secret_name) -e af3ipynb_bucket=$(vars.af3ipynb_bucket) -e default_datapipeline_partition_name=$(vars.default_datapipeline_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_inference_partition_name=$(vars.default_inference_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings) -e sif_dir=$(vars.sif_dir) -e model_dir=$(vars.model_dir) -e db_dir=$(vars.db_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path) -e inference_enable_unified_memory=$(vars.inference_enable_unified_memory)"
+    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.slurm_rest_user) -e af3ipynb_bucket_local_mount=$(vars.af3ipynb_bucket_local_mount) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_api_port=$(vars.slurm_rest_api_port) -e slurm_rest_token_secret_name=$(vars.slurm_rest_token_secret_name) -e af3ipynb_bucket=$(vars.af3ipynb_bucket) -e default_datapipeline_partition_name=$(vars.default_datapipeline_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_inference_partition_name=$(vars.default_inference_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings) -e sif_dir=$(vars.sif_dir) -e model_dir=$(vars.model_dir) -e db_dir=$(vars.db_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path) -e inference_enable_unified_memory=$(vars.inference_enable_unified_memory)"
 
 deployment_groups:
 - group: environment
@@ -142,7 +142,7 @@ deployment_groups:
         ranges: [0.0.0.0/0]
         allow:
         - protocol: tcp
-          ports: ["$(vars.notebook.api_port)"]
+          ports: ["$(vars.slurm_rest_api_port)"]
 
   - id: enable_apis
     source: community/modules/project/service-enablement

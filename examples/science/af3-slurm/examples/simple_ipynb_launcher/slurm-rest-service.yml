@@ -21,14 +21,14 @@
     slurm_rest_server_activate:
     service_user:
     af3ipynb_bucket:
-    secret_name:
-    api_port:
+    slurm_rest_token_secret_name:
+    slurm_rest_api_port:
     sif_dir:
     model_dir:
     db_dir:
     pdb_database_path:
     jax_compilation_cache_path:
-    jupyter_notebook_bucket_local_mount:
+    af3ipynb_bucket_local_mount:
     inference_enable_unified_memory:
 
     # Default Datapipeline Partition Config
@@ -68,11 +68,11 @@
     # fixed variables, not intended to be modified
     service_name: af3slurmrestapi
     service_type: simple
-    exec_start: "slurmrestd -u {{ service_user }} 0.0.0.0:{{ api_port }}"
+    exec_start: "slurmrestd -u {{ service_user }} 0.0.0.0:{{ slurm_rest_api_port }}"
     start_after: network.target
     slurmrestapi_environment: "SLURM_JWT=daemon"
-    af3_job_template_jupyter_path: "{{ jupyter_notebook_bucket_local_mount }}/libs/launch_af3_job.sh.j2"
-    slurm_info_json_path: "{{ jupyter_notebook_bucket_local_mount }}/libs/slurm_info.json"
+    af3_job_template_jupyter_path: "{{ af3ipynb_bucket_local_mount }}/libs/launch_af3_job.sh.j2"
+    slurm_info_json_path: "{{ af3ipynb_bucket_local_mount }}/libs/slurm_info.json"
     slurm_node_working_directory: "/home/{{ service_user }}"
 
   tasks:
