@@ -35,7 +35,7 @@ vars:
   disk_size_gb: 128
   instance_image:
     project: $(vars.project_id)
-    family: $(vars.deployment_name)-slurm-apptainer
+    family: $(vars.deployment_name)-notebook-setup
 
   ipynb_launcher_runner:
   - type: data
@@ -69,7 +69,7 @@ deployment_groups:
 
 - group: build-setup-base
   modules:
-  - id: af3ipynb-setup-startup-script
+  - id: af3ipynb_setup_startup_script
     source: modules/scripts/startup-script
     settings:
       runners: $(flatten([vars.ipynb_launcher_runner, vars.ipynb_setup_runner]))
@@ -81,7 +81,7 @@ deployment_groups:
     kind: packer
     use:
     - af3ipynb_network
-    - af3ipynb-setup-startup-script
+    - af3ipynb_setup_startup_script
     settings:
       disk_size: $(vars.disk_size_gb)
       machine_type: $(vars.image_build_machine_type)
