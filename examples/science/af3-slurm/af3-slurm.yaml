@@ -118,7 +118,7 @@ vars:
   - type: ansible-local
     destination: slurm-rest-service.yml
     source: $(ghpc_stage("pkg/ansible/playbooks/slurm-rest-service.yml"))
-    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.slurm_rest_user) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_api_port=$(vars.slurm_rest_api_port) -e af3ipynb_bucket_local_mount=$(vars.af3ipynb_bucket_local_mount)"
+    args: "-e project_id=$(vars.project_id) -e service_user=$(vars.slurm_rest_user) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_api_port=$(vars.slurm_rest_api_port) -e af3ipynb_bucket=$(vars.af3ipynb_bucket)"
 
 deployment_groups:
 - group: environment

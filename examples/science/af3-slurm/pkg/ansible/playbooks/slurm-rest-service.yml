@@ -21,7 +21,7 @@
     slurm_rest_server_activate:
     service_user:
     slurm_rest_api_port:
-    af3ipynb_bucket_local_mount:
+    af3ipynb_bucket:
 
     # fixed variables, not intended to be modified
     service_name: af3slurmrestapi
@@ -29,9 +29,8 @@
     exec_start: "slurmrestd -u {{ service_user }} 0.0.0.0:{{ slurm_rest_api_port }}"
     start_after: network.target
     slurmrestapi_environment: "SLURM_JWT=daemon"
-    af3_job_template_jupyter_path: "{{ af3ipynb_bucket_local_mount }}/libs/launch_af3_job.sh.j2"
-    slurm_info_json_path: "{{ af3ipynb_bucket_local_mount }}/libs/slurm_info.json"
     slurm_node_working_directory: "/home/{{ service_user }}"
+
 
   tasks:
   - name: Ensure slurm_rest_server_activate is boolean
@@ -90,7 +89,32 @@
         group: root
         mode: "0644"
 
+    - name: Save controller node public IP
+      block:
+      - name: Get public IP address from GCP metadata
+        ansible.builtin.uri:
+          url: http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip
+          method: GET
+          headers:
+            Metadata-Flavor: Google
+          return_content: yes
+        register: gcp_metadata_response
 
+      - name: Save public IP address to JSON file
+        ansible.builtin.copy:
+          dest: /tmp/slurm_info.json
+          content: |
+            {
+              "hostname": "{{ gcp_metadata_response.content }}"
+            }
+          mode: "0644"
+
+      - name: Upload slurm_info.json to GCS
+        ansible.builtin.command:
+          cmd: gcloud storage cp /tmp/slurm_info.json gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
+        register: upload_slurm_info
+
+      when: af3ipynb_bucket is defined and af3ipynb_bucket | length > 0
     when: activate
 
   handlers:
