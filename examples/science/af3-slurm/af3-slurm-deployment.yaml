@@ -57,7 +57,7 @@ vars:
   af3ipynb_bucket: "" # set to "" if not used
   af3ipynb_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /
 
-  # Slurm REST API Service config]
+  # Slurm REST API Service config
   slurm_rest_server_activate: true # enable slurm REST API server
   slurm_rest_user: af3ipynb
   slurm_rest_token_secret_name: "" # name of the secret manager to be used for saving the slurm auth token, set to "" if not used

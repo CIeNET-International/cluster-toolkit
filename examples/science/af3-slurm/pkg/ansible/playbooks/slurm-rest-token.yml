@@ -48,7 +48,7 @@
 
     - name: Decode SLURM token value
       ansible.builtin.set_fact:
-        slurm_token: "{{ slurm_token_encoded.content | b64decode  | trim }}"
+        slurm_token: "{{ slurm_token_encoded.content | b64decode | trim }}"
 
     - name: Check if GCP secret exists
       ansible.builtin.shell: |
