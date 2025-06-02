@@ -88,16 +88,6 @@ You can check the `/var/log/slurm/setup.log` file on each node to confirm the su
 
 Make sure you submitting Slurm API requests only after the appropriate "Done setting up" message is observed on all necessary login and controller nodes. Monitoring these log files allows you to track the initialization process of your cluster.
 
-## Upload Notebook Code
-ssh into any node and then
- cd to ipynb_setup and run the ipynb-upload-config.yml, this will upload
-slurm-rest-api-notebook.ipynb to the bucket, after this, you can see the file when you open JupyterLab (in Cloud Console: Vertext AI / Workbench / Instances)
-
-  ```bash
-  cd /home/af3ipynb/ipynb_setup
-  ansible-playbook ipynb-upload-config.yml
-  ```
-
 ## Upload Notebook to Bucket
 
 To upload the Jupyter notebook to the cloud storage bucket so it can be accessed via JupyterLab:
