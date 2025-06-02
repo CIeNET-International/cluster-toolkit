@@ -74,13 +74,13 @@ slurm_rest_token_secret_name: "<your-secret-name>"
     --condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
   ```
 
-  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the Secret Manager page in the Google Cloud Console.
+  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the `Secret Manager` page in the Google Cloud Console.
 
   <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
 
 #### Verify Access
 
-  To confirm that the service account has the necessary permissions, from the notebook terminal run the following command:
+  To confirm that the service account has the necessary permissions, from the jupyter notebook workbench, you can open a terminal and run the following command:
 
   ```bash
   gcloud secrets versions access latest --secret=<your-secret-name>
