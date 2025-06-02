@@ -121,7 +121,7 @@
     "from google.cloud import secretmanager_v1\n",
     "from google.api_core.exceptions import NotFound\n",
     "\n",
-    "gcp_secret_name = \"{{ secret_name }}\"\n",
+    "gcp_secret_name = \"{{ slurm_rest_token_secret_name }}\"\n",
     "gcp_project_id = \"{{ project_id }}\"\n",
     "\n",
     "secret_manager_client = secretmanager_v1.SecretManagerServiceClient()\n",
@@ -168,7 +168,7 @@
     "# Initialize AF3SlurmClient\n",
     "client = AF3SlurmClient(\n",
     "    hostname=data[\"hostname\"],\n",
-    "    port={{ api_port }},\n",
+    "    port={{ slurm_rest_api_port }},\n",
     "    token=slurm_rest_api_token,\n",
     "    science_settings=science_settings,\n",
     ")"

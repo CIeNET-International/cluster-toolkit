@@ -23,6 +23,7 @@ validators:
 # af3-slurm-deployment.yaml
 vars:
   deployment_name: af3-slurm-ipynb # adjust if necessary
+  notebook_machine_type: n1-standard-4
 
 deployment_groups:
 - group: jupyter_notebook
@@ -31,7 +32,7 @@ deployment_groups:
     source: modules/file-system/pre-existing-network-storage
     settings:
       remote_mount: gs://$(vars.af3ipynb_bucket)
-      local_mount: $(vars.notebook.jupyter_notebook_bucket_local_mount)
+      local_mount: $(vars.af3ipynb_bucket_local_mount)
       fs_type: gcsfuse
       mount_options: defaults,_netdev,implicit_dirs,allow_other,dir_mode=0777,file_mode=777
 
@@ -40,7 +41,7 @@ deployment_groups:
     use: [slurmrestapi_bucket]
     settings:
       gcs_bucket_path: $(slurmrestapi_bucket.network_storage.remote_mount)
-      machine_type: $(vars.notebook.machine_type)
+      machine_type: $(vars.notebook_machine_type)
       instance_image:
         project: deeplearning-platform-release
         family: tf-latest-cpu

@@ -42,3 +42,4 @@
       group: "{{ service_user }}"
       mode: '0777'
       recurse: yes
+    when: user_exists.rc != 0
