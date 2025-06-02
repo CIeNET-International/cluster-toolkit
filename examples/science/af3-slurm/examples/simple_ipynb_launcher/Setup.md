@@ -86,7 +86,9 @@ slurm_rest_token_secret_name: "<your-secret-name>"
   gcloud secrets versions access latest --secret=<your-secret-name>
   ```
 
-  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager.
+  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager as shown in the image below.
+
+   <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
 
 ### Startup Script Completion Before Slurm API Requests
 
