@@ -26,7 +26,7 @@ this solution provisions an auto-scaling HPC environment. Using the Slurm Worklo
 can dynamically spin up and spin down compute resources for the Datapipeline stage and Inference stage
 respectively and as required by your folding workloads.
 
-<img src="adm/AlphaFold-architecture.png" alt="af3-slurm architecture" width="700">
+<img src="adm/AlphaFold3-architecture.png" alt="af3-slurm architecture" width="700">
 
 The AlphaFold 3 High Throughput solution maps the Datapipeline and Inference steps to Google Compute Engine
 VM families that give you a **high number of folding executions/$** and that can horizontally scale out.
@@ -488,31 +488,6 @@ If you modify your configuration but do not touch the image, it may save you tim
 ./gcluster deploy af3-slurm --auto-approve --skip image  
 ```
 
-### (Optional) Deploying a Jupyter Notebook for AlphaFold
-
-You can optionally deploy a Jupyter Notebook environment to run AlphaFold step-by-step. This is useful for interactive exploration and making custom modifications to the AlphaFold pipeline.
-
-> **Important:** To enable the Jupyter Notebook deployment, you **must provide a cloud storage bucket**. If no bucket is specified, the notebook environment will not be created.
-
-#### Steps to Deploy
-
-1. Ensure you have provided a valid cloud storage bucket in your `af3-slurm-deployment.yaml`:
-
-    ```yaml
-    af3ipynb_bucket: "<your-pre-existing-bucket-name>"
-    ```
-
-2. If you have already deployed the cluster (see [Deploy the Cluster](#deploy-the-cluster)) **without specifying** the `af3ipynb_bucket` in your `af3-slurm-deployment.yaml` file and now wish to enable the Jupyter Notebook functionality, you must [**tear down the existing cluster**](#teardown-instructions) and [**redeploy a new cluster**](#deploy-the-cluster) with the correct `af3ipynb_bucket` value. Could follow `--skip image` command while deploying to reduce deployment time.
-Note that the Jupyter Notebook will not function properly if added to an already deployed cluster without this configuration.
-
-3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
-
-    ```bash
-    ./gcluster deploy -d example/af3/af3-slurm-deployment.yaml example/af3/af3-slurm-ipynb.yaml --auto-approve 
-    ```
-
-For more details, please refer to the [Simple Ipynb Launcher](examples/simple_ipynb_launcher/README.md).
-
 #### Bootstrapping of the Databases Bucket
 
 As described in section [Prepare Google Cloud Storage Buckets](#prepare-google-cloud-storage-buckets),
@@ -578,17 +553,3 @@ reverse order. Leave out the `--auto-approve` if you want control over each depl
 ```bash
 ./gcluster destroy af3-slurm --auto-approve
 ```
-
-### (Optional) Teardown Jupyter Notebook
-
-If you have previously deployed the Jupyter Notebook by following [Deploying a Jupyter Notebook for AlphaFold](#optional-deploying-a-jupyter-notebook-for-alphafold) and would like to tear down the notebook deployment, use the command below.
-
-```bash
-./gcluster destroy af3-slurm-ipynb --auto-approve
-```
-
-> [!WARNING]
-> If you do not destroy all three deployment groups and/or the notebook deployment, then there may be continued
-> associated costs. Also, the buckets you may have created via the cloud console or CLI will
-> not be destroyed by the above command (they would be, however, destroyed if you deleted the project).
-> For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
