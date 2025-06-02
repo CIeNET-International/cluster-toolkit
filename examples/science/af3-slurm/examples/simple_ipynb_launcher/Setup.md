@@ -40,7 +40,7 @@ Note that the Jupyter Notebook will not function properly if added to an already
 3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
 
     ```bash
-    ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher af3-slurm-ipynb.yaml --auto-approve 
+    ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve 
     ```
 
 ### Activate Ipynb Launcher
@@ -92,7 +92,7 @@ Make sure you submitting Slurm API requests only after the appropriate "Done set
 
 To upload the Jupyter notebook to the cloud storage bucket so it can be accessed via JupyterLab:
 
-1. **SSH into any node** in the cluster.
+1. **SSH into controller node** in the cluster.
 
 2. **Navigate to the setup directory**:
    ```bash
