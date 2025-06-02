@@ -63,9 +63,9 @@ slurm_rest_token_secret_name: "<your-secret-name>"
 ```
 
 #### Granting Access to the Token After Secret Creation
-  Once the secret has been created, you must ensure that the appropriate service account (such as the Compute Engine instance’s default service account) has permission to read the secret. Without proper access, SLURM services will not be able to authenticate.
+  Before running the command below, please complete all other setup steps to ensure the secret is created or updated with a new token. Once the secret has been created or updated, you can verify that the appropriate service account (such as the Compute Engine instance’s default service account) has permission to read the secret. Without proper access, SLURM services will not be able to authenticate.
 
-  If you have not granted access yet, complete the other setup steps first, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values::
+  If you have not granted access yet, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values:
 
   ```bash
   gcloud secrets add-iam-policy-binding <your-secret-name> \
