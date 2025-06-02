@@ -54,13 +54,39 @@ af3ipynb_bucket: "<your-pre-existing-bucket>"
 
 ### Configuring the SLURM REST API Token Secret Name
 
-Replace <your-secret-name> with the actual name of a secret you have created in Secret Manager that currently exists without a token value. Alternatively, you can provide the secret name that does not yet exist in Secret Manager. If the specified secret name is new, this blueprint will automatically create it for you.
+Replace <your-secret-name> with the name of an existing secret in Secret Manager. Alternatively, you can specify a name for a secret that does not yet exist. If the specified secret name is new, this blueprint will automatically create it for you.
 
 > This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
 
 ```yaml
 slurm_rest_token_secret_name: "<your-secret-name>"
 ```
+
+#### Granting Access to the Token After Secret Creation
+  Once the secret has been created, you must ensure that the appropriate service account (such as the Compute Engine instance’s default service account) has permission to read the secret. Without proper access, SLURM services will not be able to authenticate.
+
+  If you have not granted access yet, complete the other setup steps first, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values::
+
+  ```bash
+  gcloud secrets add-iam-policy-binding <your-secret-name> \
+    --member="serviceAccount:$(gcloud projects describe <your-project-id> --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" \
+    --condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
+  ```
+
+  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the Secret Manager page in the Google Cloud Console.
+
+  <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
+
+#### Verify Access
+
+  To confirm that the service account has the necessary permissions, from the notebook terminal run the following command:
+
+  ```bash
+  gcloud secrets versions access latest --secret=<your-secret-name>
+  ```
+
+  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager.
 
 ### Startup Script Completion Before Slurm API Requests
 
