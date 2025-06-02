@@ -40,7 +40,8 @@ Note that the Jupyter Notebook will not function properly if added to an already
 3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
 
     ```bash
-    ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve 
+    ~$ cd cluster-toolkit  
+    cluster-toolkit$ ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
     ```
 
 ### Activate Ipynb Launcher
@@ -85,7 +86,6 @@ You can check the `/var/log/slurm/setup.log` file on each node to confirm the su
   
   This message confirms that the startup script on a controller node has finished its configuration.
 
-
 Make sure you submitting Slurm API requests only after the appropriate "Done setting up" message is observed on all necessary login and controller nodes. Monitoring these log files allows you to track the initialization process of your cluster.
 
 ## Upload Notebook to Bucket
@@ -95,18 +95,23 @@ To upload the Jupyter notebook to the cloud storage bucket so it can be accessed
 1. **SSH into controller node** in the cluster.
 
 2. **Navigate to the setup directory**:
+
    ```bash
    cd /home/af3ipynb/ipynb_setup
    ```
+
 3. Run the Ansible playbook to upload the notebook:
+
     ```bash
     ansible-playbook ipynb-upload-config.yml
     ```
-This will upload `slurm-rest-api-notebook.ipynb` to the designated bucket (`af3ipynb_bucket`).
 
+This will upload `slurm-rest-api-notebook.ipynb` to the designated bucket (`af3ipynb_bucket`).
 Once the upload is complete, you can access the notebook from the JupyterLab interface via:
 
-> **Cloud Console → Vertex AI → Workbench → Instances**
+```text
+Cloud Console → Vertex AI → Workbench → Instances
+```
 
 ## Custom configuration
 
