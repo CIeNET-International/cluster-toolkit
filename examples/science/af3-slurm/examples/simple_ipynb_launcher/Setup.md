@@ -100,18 +100,16 @@ To upload the Jupyter notebook to the cloud storage bucket so it can be accessed
    cd /home/af3ipynb/ipynb_setup
    ```
 
-3. Run the Ansible playbook to upload the notebook:
+3. Run the Ansible playbook to upload the Jupyter notebook and its required library files to the designated bucket:
 
     ```bash
     ansible-playbook ipynb-upload-config.yml
     ```
 
-This will upload `slurm-rest-api-notebook.ipynb` to the designated bucket (`af3ipynb_bucket`).
+This playbook will upload `slurm-rest-api-notebook.ipynb` along with its associated scripts and library files to the target bucket (`af3ipynb_bucket`).
 Once the upload is complete, you can access the notebook from the JupyterLab interface via:
 
-```text
-Cloud Console → Vertex AI → Workbench → Instances
-```
+> Cloud Console → Vertex AI → Workbench → Instances
 
 ## Custom configuration
 
