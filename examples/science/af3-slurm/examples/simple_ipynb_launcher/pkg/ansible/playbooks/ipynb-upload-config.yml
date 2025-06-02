@@ -84,6 +84,7 @@
               {'name': 'slurm_client.py', 'result': upload_slurm_client},
               {'name': '__init__.py', 'result': upload_init},
               {'name': 'slurm-rest-api-notebook.ipynb', 'result': upload_notebook},
+              {'name': 'slurm_info.json', 'result': upload_slurm_info},
             ] | selectattr('result.failed', 'defined') | selectattr('result.failed') | list
           }}
 

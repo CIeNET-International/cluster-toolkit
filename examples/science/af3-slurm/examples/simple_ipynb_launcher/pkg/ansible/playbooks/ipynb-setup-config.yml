@@ -84,12 +84,14 @@
         owner: root
         group: root
       register: create_folder
+
     - name: Copy rest_api_launch_af3_job.sh.j2
       ansible.builtin.copy:
         src: /tmp/rest_api_launch_af3_job.sh.j2
         dest: "{{ ipynb_setup_folder }}/libs/rest_api_launch_af3_job.sh.j2"
       register: copy_launch_script
       ignore_errors: true
+
     - name: Copy notebook-requirements.txt
       ansible.builtin.copy:
         src: /tmp/notebook-requirements.txt
@@ -132,6 +134,7 @@
       ansible.builtin.copy:
         src: /tmp/ipynb-upload-config.yml
         dest: "{{ ipynb_setup_folder }}/ipynb-upload-config.yml"
+      register: copy_ipynb_upload_config
       ignore_errors: true
 
     - name: Dump all vars to a YAML file
@@ -202,7 +205,8 @@
               {'name': 'visualization.py', 'result': copy_visualization},
               {'name': 'slurm_client.py', 'result': copy_slurm_client},
               {'name': 'slurm-rest-api-notebook.ipynb', 'result': copy_notebook},
-              {'name': '__init__.py', 'result': copy_init}
+              {'name': '__init__.py', 'result': copy_init},
+              {'name': 'ipynb-upload-config.yml', 'result': copy_ipynb_upload_config},
             ] | selectattr('result.failed', 'defined') | selectattr('result.failed') | list
           }}
 
