@@ -26,6 +26,16 @@ You can deploy a Jupyter Notebook environment to run AlphaFold step-by-step. Thi
 
 > **Important:** To enable the Jupyter Notebook deployment, you **must provide a cloud storage bucket**. If no bucket is specified, the notebook environment will not be created.
 
+### Configuring the SLURM REST API Token Secret Manager
+
+Replace `slurm_rest_token_secret_name` value in the `af3-slurm-deployment.yaml` with the name of an existing secret in Secret Manager. Alternatively, you can specify a name for a secret that does not yet exist. If the specified secret name is new, this blueprint will automatically create it for you.
+
+> This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
+
+```yaml
+slurm_rest_token_secret_name: "<your-secret-name>"
+```
+
 ### Steps to Deploy
 
 1. Ensure you have provided a valid cloud storage bucket in your `af3-slurm-deployment.yaml`:
@@ -40,30 +50,16 @@ Note that the Jupyter Notebook will not function properly if added to an already
 3. Build the Jupyter notebook with `af3-slurm-ipynb.yaml`:
 
     ```bash
+    # Make sure you are under cluster-toolkit root folder
     ~$ cd cluster-toolkit  
     cluster-toolkit$ ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
     ```
 
-### Activate Ipynb Launcher
+### Granting Access to the Token
 
-To start the Simple Ipynb Launcher, ensure that the following settings are present in your `af3-slurm-deployment.yaml` file:
+  > Before running this section, please complete the [**Upload Notebook to Bucket**](#upload-notebook-to-bucket) section first.
 
-```yaml
-af3ipynb_bucket: "<your-pre-existing-bucket>"
-```
-
-### Configuring the SLURM REST API Token Secret Name
-
-Replace <your-secret-name> with the name of an existing secret in Secret Manager. Alternatively, you can specify a name for a secret that does not yet exist. If the specified secret name is new, this blueprint will automatically create it for you.
-
-> This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
-
-```yaml
-slurm_rest_token_secret_name: "<your-secret-name>"
-```
-
-#### Granting Access to the Token After Secret Creation
-  Before running the command below, please complete all other setup steps to ensure the secret is created or updated with a new token. Once the secret has been created or updated, you can verify that the appropriate service account (such as the Compute Engine instance’s default service account) has permission to read the secret. Without proper access, SLURM services will not be able to authenticate.
+  After the deploying steps are success, you must ensure that the appropriate service account (e.g., the default service account for the Compute Engine instance) has permission to access the secret. This step is crucial because, without access to the secret, the notebook will not be able to authenticate properly or send valid requests to the SLURM REST API.
 
   If you have not granted access yet, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values:
 
@@ -77,6 +73,8 @@ slurm_rest_token_secret_name: "<your-secret-name>"
   This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the `Secret Manager` page in the Google Cloud Console.
 
   <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
+
+  This setting allows the notebook server to successfully retrieve the value of the specified secret by its name.
 
 #### Verify Access
 
