@@ -55,39 +55,6 @@ Note that the Jupyter Notebook will not function properly if added to an already
     cluster-toolkit$ ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
     ```
 
-### Granting Access to the Token
-
-  > Before running this section, please complete the [**Upload Notebook to Bucket**](#upload-notebook-to-bucket) section first.
-
-  After the deploying steps are success, you must ensure that the appropriate service account (e.g., the default service account for the Compute Engine instance) has permission to access the secret. This step is crucial because, without access to the secret, the notebook will not be able to authenticate properly or send valid requests to the SLURM REST API.
-
-  If you have not granted access yet, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values:
-
-  ```bash
-  gcloud secrets add-iam-policy-binding <your-secret-name> \
-    --member="serviceAccount:$(gcloud projects describe <your-project-id> --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
-    --role="roles/secretmanager.secretAccessor" \
-    --condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
-  ```
-
-  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the `Secret Manager` page in the Google Cloud Console.
-
-  <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
-
-  This setting allows the notebook server to successfully retrieve the value of the specified secret by its name.
-
-#### Verify Access
-
-  To confirm that the service account has the necessary permissions, from the jupyter notebook workbench, you can open a terminal and run the following command:
-
-  ```bash
-  gcloud secrets versions access latest --secret=<your-secret-name>
-  ```
-
-  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager as shown in the image below.
-
-   <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
-
 ### Startup Script Completion Before Slurm API Requests
 
 To ensure proper cluster initialization, please wait for the startup scripts to complete successfully on all relevant nodes (including login and controller nodes) **before submitting any Slurm API requests from the notebook**.
@@ -136,6 +103,39 @@ This playbook will upload `slurm-rest-api-notebook.ipynb` along with its associa
 Once the upload is complete, you can access the notebook from the JupyterLab interface via:
 
 > Cloud Console → Vertex AI → Workbench → Instances
+
+## Granting Access to the Token
+
+  > Before running this section, please complete the [**Upload Notebook to Bucket**](#upload-notebook-to-bucket) section first.
+
+  After the deploying steps are success, you must ensure that the appropriate service account (e.g., the default service account for the Compute Engine instance) has permission to access the secret. This step is crucial because, without access to the secret, the notebook will not be able to authenticate properly or send valid requests to the SLURM REST API.
+
+  If you have not granted access yet, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values:
+
+  ```bash
+  gcloud secrets add-iam-policy-binding <your-secret-name> \
+    --member="serviceAccount:$(gcloud projects describe <your-project-id> --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" \
+    --condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
+  ```
+
+  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the `Secret Manager` page in the Google Cloud Console.
+
+  <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
+
+  This setting allows the notebook server to successfully retrieve the value of the specified secret by its name.
+
+### Verify Access
+
+  To confirm that the service account has the necessary permissions, from the jupyter notebook workbench, you can open a terminal and run the following command:
+
+  ```bash
+  gcloud secrets versions access latest --secret=<your-secret-name>
+  ```
+
+  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager as shown in the image below.
+
+   <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
 
 ## Custom configuration
 
