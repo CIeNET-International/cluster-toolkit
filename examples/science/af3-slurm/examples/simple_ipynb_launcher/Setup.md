@@ -55,32 +55,6 @@ Note that the Jupyter Notebook will not function properly if added to an already
     cluster-toolkit$ ./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
     ```
 
-### Startup Script Completion Before Slurm API Requests
-
-To ensure proper cluster initialization, please wait for the startup scripts to complete successfully on all relevant nodes (including login and controller nodes) **before submitting any Slurm API requests from the notebook**.
-
-**How to Verify Startup Script Completion:**
-
-You can check the `/var/log/slurm/setup.log` file on each node to confirm the successful execution of the startup script. Look for one of the following log entries, indicating completion for the respective node type:
-
-- **Login Node Completion:**
-
-  ```text
-  INFO: Done setting up login
-  ```
-
-  This message confirms that the startup script on a login node has finished its configuration.
-
-- **Controller Node Completion:**
-
-  ```text
-  INFO: Done setting up controller
-  ```
-  
-  This message confirms that the startup script on a controller node has finished its configuration.
-
-Make sure you submitting Slurm API requests only after the appropriate "Done setting up" message is observed on all necessary login and controller nodes. Monitoring these log files allows you to track the initialization process of your cluster.
-
 ## Upload Notebook to Bucket
 
 To upload the Jupyter notebook to the cloud storage bucket so it can be accessed via JupyterLab:
@@ -153,7 +127,6 @@ If you would like to tear down the notebook deployment, use the command below.
 ```
 
 > [!WARNING]
-> If you do not destroy all three deployment groups and/or the notebook deployment, then there may be continued
-> associated costs. Also, the buckets you may have created via the cloud console or CLI will
-> not be destroyed by the above command (they would be, however, destroyed if you deleted the project).
+> If you do not destroy the Jupyter Notebook deployment, it may continue to incur costs.
+> Additionally, any Cloud Storage buckets you created (via the CLI or console) will not be automatically deleted. You are responsible for cleaning them up manually to avoid unnecessary charges.
 > For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).

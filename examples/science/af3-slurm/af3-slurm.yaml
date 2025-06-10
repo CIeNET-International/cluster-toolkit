@@ -106,44 +106,44 @@ vars:
   slurm_restapi_user_runner:
   - type: ansible-local
     destination: "slurm-rest-user.yml"
-    source: $(ghpc_stage("pkg/ansible/playbooks/slurm-rest-user.yml"))
+    source: $(ghpc_stage("adm/slurm-rest-user.yml"))
     args: -e service_user=$(vars.slurm_rest_user)
 
   slurm_restapi_token_runner:
   - type: ansible-local
     destination: "slurm-rest-token.yml"
-    source: $(ghpc_stage("pkg/ansible/playbooks/slurm-rest-token.yml"))
+    source: $(ghpc_stage("adm/slurm-rest-token.yml"))
     args: "-e service_user=$(vars.slurm_rest_user) -e project_id=$(vars.project_id) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_token_secret_name=$(vars.slurm_rest_token_secret_name)"
 
   slurm_restapi_service_runner:
   - type: ansible-local
     destination: "slurm-rest-service.yml"
-    source: $(ghpc_stage("pkg/ansible/playbooks/slurm-rest-service.yml"))
+    source: $(ghpc_stage("adm/slurm-rest-service.yml"))
     args: "-e project_id=$(vars.project_id) -e service_user=$(vars.slurm_rest_user) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_api_port=$(vars.slurm_rest_api_port) -e af3ipynb_bucket=$(vars.af3ipynb_bucket) -e slurm_rest_info_path=$(vars.slurm_rest_info_path)"
 
   # Jupyter notebook setup
   ipynb_launcher_runner:
   - type: data
     destination: "/tmp/slurm-rest-api-notebook.ipynb.j2"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/ansible/jinja_templates/slurm-rest-api-notebook.ipynb.j2"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/slurm-rest-api-notebook.ipynb.j2"))
   - type: data
     destination: "/tmp/slurm_client.py.j2"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/ansible/jinja_templates/slurm_client.py.j2"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/slurm_client.py.j2"))
   - type: data
     destination: "/tmp/visualization.py"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/assets/visualization.py"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/visualization.py"))
   - type: data
     destination: "/tmp/notebook-requirements.txt"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/assets/requirements.txt"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/requirements.txt"))
   - type: data
     destination: "/tmp/rest_api_launch_af3_job.sh.j2"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/ansible/jinja_templates/rest_api_launch_af3_job.sh.j2"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/rest_api_launch_af3_job.sh.j2"))
   - type: data
     destination: "/tmp/ipynb-upload-config.yml"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/ansible/playbooks/ipynb-upload-config.yml"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/ipynb-upload-config.yml"))
   - type: ansible-local
     destination: "ipynb-setup-config.yml"
-    source: $(ghpc_stage("examples/simple_ipynb_launcher/pkg/ansible/playbooks/ipynb-setup-config.yml"))
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/ipynb-setup-config.yml"))
     args: "-e project_id=$(vars.project_id) -e service_user=$(vars.slurm_rest_user) -e af3ipynb_bucket_local_mount=$(vars.af3ipynb_bucket_local_mount) -e slurm_rest_server_activate=$(vars.slurm_rest_server_activate) -e slurm_rest_api_port=$(vars.slurm_rest_api_port) -e slurm_rest_token_secret_name=$(vars.slurm_rest_token_secret_name) -e af3ipynb_bucket=$(vars.af3ipynb_bucket) -e default_datapipeline_partition_name=$(vars.default_datapipeline_partition.name) -e default_datapipeline_timeout=$(vars.default_datapipeline_timeout) -e default_inference_partition_name=$(vars.default_inference_partition.name) -e default_inference_timeout=$(vars.default_inference_timeout) -e datapipeline_c3dhm_partition_name=$(vars.datapipeline_c3dhm_partition.name) -e datapipeline_c3dhm_partition_machine_type=$(vars.datapipeline_c3dhm_partition.machine_type) -e datapipeline_c3dhm_partition_memory=$(vars.datapipeline_c3dhm_partition.memory) -e datapipeline_c3dhm_partition_cpu_count=$(vars.datapipeline_c3dhm_partition.cpu_count) -e inference_g2_partition_name=$(vars.inference_g2_partition.name) -e inference_g2_partition_machine_type=$(vars.inference_g2_partition.machine_type) -e inference_g2_partition_memory=$(vars.inference_g2_partition.memory) -e inference_g2_partition_cpu_count=$(vars.inference_g2_partition.cpu_count) -e inference_a2_partition_name=$(vars.inference_a2_partition.name) -e inference_a2_partition_machine_type=$(vars.inference_a2_partition.machine_type) -e inference_a2_partition_memory=$(vars.inference_a2_partition.memory) -e inference_a2_partition_cpu_count=$(vars.inference_a2_partition.cpu_count) -e inference_a2u_partition_name=$(vars.inference_a2u_partition.name) -e inference_a2u_partition_machine_type=$(vars.inference_a2u_partition.machine_type) -e inference_a2u_partition_memory=$(vars.inference_a2u_partition.memory) -e inference_a2u_partition_cpu_count=$(vars.inference_a2u_partition.cpu_count) -e max_template_date=$(vars.max_template_date) -e conformer_max_iterations=$(vars.conformer_max_iterations) -e num_recycles=$(vars.num_recycles) -e num_diffusion_samples=$(vars.num_diffusion_samples) -e num_seeds=$(vars.num_seeds) -e save_embeddings=$(vars.save_embeddings) -e sif_dir=$(vars.sif_dir) -e model_dir=$(vars.model_dir) -e db_dir=$(vars.db_dir) -e pdb_database_path=$(vars.pdb_database_path) -e jax_compilation_cache_path=$(vars.jax_compilation_cache_path) -e inference_enable_unified_memory=$(vars.inference_enable_unified_memory) -e slurm_rest_info_path=$(vars.slurm_rest_info_path)"
 
 deployment_groups:

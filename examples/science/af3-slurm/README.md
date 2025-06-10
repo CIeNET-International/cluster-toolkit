@@ -156,11 +156,11 @@ To generate a cost estimate based on your projected usage, use the
 ## Known Limitations
 This solution currently has the following known limitations:
 - **Data Pipeline Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
-- **Inference Out-of-memory Condition**: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) . To do this, set the following variable in `af3-slurm-deployment.yaml`:
+- <code>Inference Out-of-memory Condition</code>: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) . To do this, set the following variable in `af3-slurm-deployment.yaml`:
 
-```yaml
-inference_enable_unified_memory: true
-```
+  ```yaml
+  inference_enable_unified_memory: true
+  ```
 
 - **Recompute vs Reuse**: The Datapipeline step of the solution is stateless and does not keep track of previously processed inputs. Thus, if previously submitted sequences are submitted again (e.g. with a different ligand), all parts will be recomputed. Mitigation: none needed. But if uses want to benefit from reuse, they can obtain MSA and templates and provide them in the input JSON file for the Inference step.
 
@@ -487,6 +487,32 @@ If you modify your configuration but do not touch the image, it may save you tim
 #!/bin/bash
 ./gcluster deploy af3-slurm --auto-approve --skip image  
 ```
+
+### Startup Script Completion
+
+To ensure proper cluster initialization, please wait for the startup scripts to complete successfully on all relevant nodes (including login and controller nodes).
+
+**How to Verify Startup Script Completion:**
+
+You can check the `/var/log/slurm/setup.log` file on each node to confirm the successful execution of the startup script. Look for one of the following log entries, indicating completion for the respective node type:
+
+- **Login Node Completion:**
+
+  ```text
+  INFO: Done setting up login
+  ```
+
+  This message confirms that the startup script on a login node has finished its configuration.
+
+- **Controller Node Completion:**
+
+  ```text
+  INFO: Done setting up controller
+  ```
+  
+  This message confirms that the startup script on a controller node has finished its configuration.
+
+Monitoring these log files helps you track the cluster initialization process. Also make sure to operate all clusters and launchers—such as the `Ipynb notebook` launcher that submits Slurm API requests from the notebook—only after the appropriate `"Done setting up"` message appears on all required login and controller nodes.
 
 #### Bootstrapping of the Databases Bucket
 
