@@ -447,6 +447,17 @@ vars:
   af3service_jobbucket: ""           # set to "" if not used
   af3service_user: af3
 
+  # AF3 Ipynb Service config
+  af3ipynb_bucket: "" # bucket name to use for AF3 Ipynb service, set to "" if AF3 Ipynb service is not used
+  af3ipynb_bucket_local_mount: /home/jupyter/alphafold # local mount point of bucket on jupyter notebook, expect to be ended without /
+
+  # Slurm REST API Service config
+  slurm_rest_server_activate: true # enable slurm REST API server
+  slurm_rest_user: af3ipynb
+  slurm_rest_token_secret_name: "" # name of the secret manager to be used for saving the slurm auth token, set to "" if SLURM REST API is not used
+  slurm_rest_api_port: 7080 # port for the slurm REST API service
+  slurm_rest_info_path: /tmp/slurm_info.json # path to save slurm info, such as public ip
+
   # Choose Default Datapipeline Partition 
   default_datapipeline_partition: $(vars.datapipeline_c3dhm_partition)
   default_datapipeline_timeout: 5400
@@ -458,8 +469,11 @@ vars:
   ... #more settings, consult the file af3-slurm-deployment.yaml
 ```
 
-#### Deploy the cluster
-If you want to configure and deploy your cluster in one go, simply type:
+#### Deploy Ipynb notebook launcher
+If you intend to launch the AF3 solution with the REST API and IPython Notebook, please complete the additional configuration steps outlined in the [IPython Notebook launcher deployment documentation](./examples/simple_ipynb_launcher/Setup-pre-cluster-deployment.md).
+
+#### Deploy Slurm cluster
+If you want to configure and deploy your Slurm cluster in one go, simply type:
 
 ```bash
 #!/bin/bash
@@ -567,6 +581,7 @@ Once your cluster is provisioned, keep on reading here for how to use the AlphaF
 
 - [Simple Job Launcher Example](examples/simple_job_launcher/README.md): Use the login node's command line to submit datapipeline and inference jobs to the cluster
 - [Simple Service Launcher Example](examples/simple_service_launcher/README.md): Drop folding job json files to a GCS buckets for the cluster to pick up. Note that you probably want to activate the daemon in the deployment file before you bring up the cluster, see [here](#modify-the-af3-slurm-deploymentyaml-file-with-your-preferred-configuration)
+- [Simple IPython Notebook Launcher Example](examples/simple_ipynb_launcher/Setup-post-cluster-deployment.md): Launches a Jupyter Notebook interface for interactively running AlphaFold 3 workflows using the SLURM REST API.  
 
 ## Teardown Instructions
 

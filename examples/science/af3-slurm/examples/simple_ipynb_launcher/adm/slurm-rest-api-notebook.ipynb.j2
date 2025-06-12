@@ -203,8 +203,18 @@
     "# Make sure to use the correct partition name that listed on AF3 System setting section\n",
     "# No changes required to run default settings\n",
     "datapipeline_partition_name = \"{{ default_datapipeline_partition_name }}\"\n",
+    "\n",
     "# Assign `input_file` with datapipeline input file path\n",
-    "input_file= \"\" # Replace with your input file path (relative path from the jupyter notebook directory)\n",
+    "input_file= \"\" # Replace with your input file path (relative path from the jupyter notebook directory)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Submit a datapipeline job\n",
     "datapipeline_submit_job_response = client.submit_data_pipeline_job(\n",
     "    partition_name=datapipeline_partition_name, \n",
     "    input_file=input_file\n",
@@ -243,12 +253,23 @@
     "inference_partition_name = \"{{ default_inference_partition_name }}\"\n",
     "\n",
     "# Assign `input_file` with inference input file path\n",
+    "# You can use the output from the datapipeline job as input for inference\n",
+    "# or you can use your own input file relative path from the jupyter notebook directory\n",
     "inference_input_file = datapipeline_submit_job_response[\"datapipeline_output_path\"]\n",
     "\n",
     "# Assign `enable_unified_memory` with True or False\n",
     "# No changes required to run default settings\n",
     "inference_enable_unified_memory = {{ inference_enable_unified_memory | default(false) | bool}}\n",
-    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Submit Inference Job\n",
     "inference_submit_job_response = client.submit_inference_job(\n",
     "    partition_name = inference_partition_name,\n",
     "    input_file = inference_input_file,\n",

@@ -8,16 +8,17 @@ It allows users to:
 - Launch data pipeline and/or inference jobs, and
 - View and validate output files — all within a Jupyter Notebook environment.
 
-## 📦 1. [Setup Guide: Launching the Jupyter Notebook](./Setup.md)
+## 📦 1. Setup Guide: Jupyter Notebook with SLURM
 
-This guide explains how to properly set up and launch the Simple Ipynb Launcher environment. It includes:
+This setup guide explains how to configure and launch the Simple IPython Launcher environment, which enables interactive AlphaFold 3 workflows via Jupyter Notebook and SLURM REST API.
 
-- Installation of dependencies and required packages  
-- Environment configuration  
-- How to start the notebook using the launcher script  
-- Troubleshooting tips during setup
+There are **two setup stages** depending on whether your cluster is already deployed:
 
-Make sure to follow this guide first if you're launching the notebook for the first time.
+- **[Pre-Cluster Deployment](./Setup-pre-cluster-deployment.md)**:
+   Ipynb notebook deployment steps **before deploying** the `af3-slurm.yaml` cluster.
+
+- **[Post-Cluster Deployment](./Setup-post-cluster-deployment.md)**:  
+   Ipynb notebook deployment steps **after deploying** the `af3-slurm.yaml` cluster.
 
 ## ▶️ 2. [Usage Guide: Step-by-Step Instructions](./Ipynb.md)
 
