@@ -30,6 +30,8 @@ This is required because these configurations are only applied at deployment tim
 Run the following command from the cluster-toolkit root directory to destroy the previously deployed SLURM cluster:
 
 ```bash
+# Make sure you're in the root of the `cluster-toolkit` directory
+cluster-toolkit$ 
 ./gcluster destroy af3-slurm --only cluster --auto-approve
 ```
 
