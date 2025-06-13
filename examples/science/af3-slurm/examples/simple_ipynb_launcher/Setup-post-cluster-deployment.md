@@ -35,7 +35,7 @@ cluster-toolkit$
 ./gcluster destroy af3-slurm --only cluster --auto-approve
 ```
 
-After tearing down the cluster, you can safely update `af3-slurm-deployment.yaml` with the required notebook settings on the next step.
+After tearing down the cluster, you can safely update `af3-slurm-deployment.yaml` with the necessary notebook settings. The next section explains how to make these updates.
 
 ## Deploying a Jupyter Notebook for AlphaFold
 

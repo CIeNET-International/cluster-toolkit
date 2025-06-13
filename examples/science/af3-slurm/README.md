@@ -597,3 +597,9 @@ reverse order. Leave out the `--auto-approve` if you want control over each depl
 ```bash
 ./gcluster destroy af3-slurm --auto-approve
 ```
+
+> [!WARNING]
+> If you do not delete all deployments, associated costs may continue to accrue.
+> Also, the buckets you may have created via the cloud console or CLI will
+> not be destroyed by the above command (they would be, however, destroyed if you deleted the project).
+> For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
