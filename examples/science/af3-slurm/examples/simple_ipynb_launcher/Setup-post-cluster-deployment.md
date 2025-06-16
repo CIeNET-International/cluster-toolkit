@@ -1,163 +1,100 @@
 # Setup: Post-Cluster Deployment
-This guide explains how to properly set up and launch the Simple IPython Launcher environment **after deploying the `af3-slurm.yaml` cluster**.
+
+This guide explains how to deploy and access the Jupyter Notebook environment for AlphaFold **after the af3-slurm.yaml cluster has already been deployed** with SLURM REST support enabled.
 
 ## Prerequisites
 
-### Set up Jobs Bucket
-
-If you want to use the simple service launcher, you need to create an additional bucket, that should
-be located in the region where you stand up your cluster:
-
-```bash
-#!/bin/bash
-
-UNIQUE_JOB_BUCKET=<your-bucket>
-PROJECT_ID=<your-gcp-project>
-REGION=<your-preferred-region>
-
-gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
-    --project=${PROJECT_ID} \
-    --default-storage-class=STANDARD --location=${REGION} \
-    --uniform-bucket-level-access
-```
-
-### Teardown SLURM cluster
-
-If you deployed the SLURM cluster without setting up the necessary configurations for the IPython Notebook (such as `af3ipynb_bucket`, `slurm_rest_token_secret_name`, or notebook-specific variables), you must tear down the existing SLURM cluster before proceeding.
-
-This is required because these configurations are only applied at deployment time. Modifying them after the cluster is live will not properly enable the notebook environment or API integration.
-
-Run the following command from the cluster-toolkit root directory to destroy the previously deployed SLURM cluster:
-
-```bash
-# Make sure you're in the root of the `cluster-toolkit` directory
-cluster-toolkit$ 
-./gcluster destroy af3-slurm --only cluster --auto-approve
-```
-
-After tearing down the cluster, you can safely update `af3-slurm-deployment.yaml` with the necessary notebook settings. The next section explains how to make these updates.
-
-## Deploying a Jupyter Notebook for AlphaFold
-
-You can deploy a Jupyter Notebook environment to run AlphaFold step-by-step. This is useful for interactive exploration and making custom modifications to the AlphaFold pipeline.
-
-> **Important:** To enable the Jupyter Notebook deployment, you **must provide a cloud storage bucket**. If no bucket is specified, the notebook environment will not be created.
-
-### Enable the SLURM REST API Server
-
-Set the `slurm_rest_server_activate` value to `true` in the `af3-slurm-deployment.yaml` file to enable the SLURM REST API server on the controller node of the `af3-slurm.yaml` cluster. This allows the Jupyter Notebook environment to send requests—such as job submissions—to the SLURM scheduler via the REST API.
+Before proceeding, ensure the following configuration values were set correctly in your `af3-slurm-deployment.yaml` file **prior to deploying the SLURM cluster**:
 
 ```yaml
 slurm_rest_server_activate: true
+slurm_rest_token_secret_name: "<your-secret-name>"            # Name of your Secret Manager secret
+af3ipynb_bucket: "<your-pre-existing-bucket-name>"           # Existing Cloud Storage bucket name
 ```
 
-### Configuring the SLURM REST API Token Secret Manager
+> [!WARNING]
+> This guide assumes that the SLURM cluster is already deployed with REST API support enabled—i.e., the values above were correctly set before deployment.
+> If any of the values above were omitted or misconfigured, you must destroy the cluster, update the deployment configuration, and redeploy. These settings are essential for enabling SLURM REST-based notebook functionality.
+> This document focuses exclusively on deploying and accessing the Jupyter Notebook environment **after** the cluster is running and properly configured. It does not cover modifying or redeploying the cluster.
 
-Set `slurm_rest_token_secret_name` value in the `af3-slurm-deployment.yaml` with the name of an existing secret in Secret Manager. Alternatively, you can specify a name for a secret that does not yet exist. If the specified secret name is new, this blueprint will automatically create it for you.
+If you have **not yet deployed** the cluster, or if you need help setting the appropriate variables prior to deployment, refer to [Setup-pre-cluster-deployment.md](./Setup-pre-cluster-deployment.md) guide.
 
-> This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
+## Deploying the Jupyter Notebook Blueprint
 
-```yaml
-slurm_rest_token_secret_name: "<your-secret-name>"
+### 1. Upload the required Notebook to the Cloud Storage Bucket
+
+First, access the controller node of your deployed SLURM cluster. Replace placeholders `<controller-node-name>` and `<your-zone>` with your actual node and zone.
+
+```bash
+gcloud compute ssh <controller-node-name> --zone=<your-zone>
 ```
 
-### Steps to Deploy
+On the controller node, run the following command (assuming the `slurm_rest_user` value in `af3-slurm-deployment.yaml` has not changed):
 
-1. **Set the notebook storage bucket** in your `af3-slurm-deployment.yaml` file:
+```bash
+cd /home/af3ipynb/ipynb_setup
+ansible-playbook ipynb-upload-config.yml
+```
 
-    ```yaml
-    af3ipynb_bucket: "<your-pre-existing-bucket-name>"
-    ```
+This step uploads the notebook (`slurm-rest-api-notebook.ipynb`) along with its required scripts and libraries to the bucket defined in the `af3ipynb_bucket` variable in `af3-slurm-deployment.yaml` file.
+Make sure that this bucket was created and specified during the SLURM cluster deployment process.
 
-    > This bucket is used to store notebooks and related files for the Jupyter environment.
+### 2. Grant Secret Access to the Notebook's Service Account
 
-2. **Deploy the Jupyter Notebook environment** using the `af3-slurm-ipynb.yaml` blueprint:
+This setting ensures that the notebook server can successfully retrieve the specified secret by name.
+Make sure the service account running the Jupyter Notebook instance (typically the Compute Engine default service account) has permission to access the Secret Manager secret that stores your SLURM REST token.
 
-    ```bash
-    # Make sure you're in the root of the `cluster-toolkit` directory
-    cluster-toolkit$ ./gcluster deploy \
-        -d examples/science/af3-slurm/af3-slurm-deployment.yaml \
-        examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml \
-        --auto-approve
-    ```
+The following command grants the Compute Engine default service account the `roles/secretmanager.secretAccessor` role, allowing it to access the specified secret in Secret Manager. The attached condition always evaluates to true, ensuring access is consistently granted.
 
-3. **Rebuild the SLURM cluster** using the updated deployment file:
+```bash
+gcloud secrets add-iam-policy-binding <your-secret-name> \
+--member="serviceAccount:$(gcloud projects describe <your-project-id> --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+--role="roles/secretmanager.secretAccessor" \
+--condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
+```
 
-    ```bash
-    # From the `cluster-toolkit` root directory
-    cluster-toolkit$ ./gcluster deploy \
-      -d examples/science/af3-slurm/af3-slurm-deployment.yaml \
-      examples/science/af3-slurm/af3-slurm.yaml \
-      --only cluster \
-      --auto-approve
-    ```
+You can verify this configuration in the Secret Manager section of the Google Cloud Console.
 
-## Upload Notebook to Bucket
+<img src="adm/secret-manager.png" alt="secret-manager" width="1000">
 
-To upload the Jupyter notebook to the cloud storage bucket so it can be accessed via JupyterLab:
+### 4. Launch the Notebook Environment
 
-1. **SSH into controller node** in the cluster.
+Deploy the Jupyter Notebook environment using the following command:
 
-2. **Navigate to the setup directory**:
+```bash
+# Move to cluster-toolkit root folder
+cd cluster-toolkit
+./gcluster deploy -d examples/science/af3-slurm/af3-slurm-deployment.yaml \
+examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
+```
 
-   ```bash
-   cd /home/af3ipynb/ipynb_setup
-   ```
+This brings up the Jupyter Notebook deployment.
 
-3. Run the Ansible playbook to upload the Jupyter notebook and its required library files to the designated bucket:
+### 5. Access the Notebook via Vertex AI Workbench
 
-    ```bash
-    ansible-playbook ipynb-upload-config.yml
-    ```
+In the Google Cloud Console:
 
-This playbook will upload `slurm-rest-api-notebook.ipynb` along with its associated scripts and library files to the target bucket (`af3ipynb_bucket`).
-Once the upload is complete, you can access the notebook from the JupyterLab interface via:
+1. Navigate to `Vertex AI` → `Workbench` → `Instances`
 
-> Cloud Console → Vertex AI → Workbench → Instances
+2. Open the JupyterLab interface for the newly deployed instance
 
-## Granting Access to the Token
+3. Locate and open the `slurm-rest-api-notebook.ipynb` file. If you haven't modified the default value of `af3ipynb_bucket_local_mount` in the `af3-slurm-deployment.yaml`, the notebook should be available at `/home/jupyter/alphafold` folder.
 
-  > Before running this section, please complete the [**Upload Notebook to Bucket**](#upload-notebook-to-bucket) section first.
+### 6. Verify REST Token Access
 
-  After the deploying steps are success, you must ensure that the appropriate service account (e.g., the default service account for the Compute Engine instance) has permission to access the secret. This step is crucial because, without access to the secret, the notebook will not be able to authenticate properly or send valid requests to the SLURM REST API.
+To verify that Secret Manager access is properly configured, open a terminal within JupyterLab and run the following command:
 
-  If you have not granted access yet, then run the following command, replacing `<your-secret-name>` and `<your-project-id>` with your values:
+```bash
+gcloud secrets versions access latest --secret=<your-secret-name>
+```
 
-  ```bash
-  gcloud secrets add-iam-policy-binding <your-secret-name> \
-    --member="serviceAccount:$(gcloud projects describe <your-project-id> --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
-    --role="roles/secretmanager.secretAccessor" \
-    --condition="expression=true,title=AlwaysTrue,description=Allow access to Secret Manager"
-  ```
+If the command returns the secret value successfully, it confirms that the notebook environment can securely access the SLURM REST API—just as in the image below:
 
-  This command grants the Compute Engine default service account the `secretAccessor` role with a condition that always evaluates to true, as shown in the image below. You can view this in the `Secret Manager` page in the Google Cloud Console.
+<img src="adm/rest_api.png" alt="slrum rest api" width="1000">
 
-  <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
+## Teardown
 
-  This setting allows the notebook server to successfully retrieve the value of the specified secret by its name.
-
-### Verify Access
-
-  To confirm that the service account has the necessary permissions, from the jupyter notebook workbench, you can open a terminal and run the following command:
-
-  ```bash
-  gcloud secrets versions access latest --secret=<your-secret-name>
-  ```
-
-  If the command succeeds, this confirms that your notebook can securely retrieve the authentication token from Secret Manager as shown in the image below.
-
-   <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
-
-## Custom configuration
-
-You can customize settings via blueprint variables before deployment. If modifications are needed later, ensure:
-
-- All required resources are available
-- Configuration changes within the notebook are validated before submitting new jobs.
-
-## Teardown Jupyter Notebook
-
-If you would like to tear down the notebook deployment, use the command below.
+To remove the Jupyter Notebook deployment when it is no longer needed, run the following command:
 
 ```bash
 ./gcluster destroy af3-slurm-ipynb --auto-approve
@@ -167,3 +104,8 @@ If you would like to tear down the notebook deployment, use the command below.
 > If you do not destroy the Jupyter Notebook deployment, it may continue to incur costs.
 > Additionally, any Cloud Storage buckets you created (via the CLI or console) will not be automatically deleted. You are responsible for cleaning them up manually to avoid unnecessary charges.
 > For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
+
+## Notes and Customization
+You can adjust the notebook setup behavior using blueprint variables in the deployment YAML.
+All configurations should be validated before running jobs.
+If further modifications to SLURM REST/API Server behavior are required, you must destroy and redeploy the cluster with the updated settings.
