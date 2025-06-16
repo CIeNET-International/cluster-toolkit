@@ -12,13 +12,13 @@ It allows users to:
 
 This setup guide explains how to configure and launch the Simple IPython Launcher environment, which enables interactive AlphaFold 3 workflows via Jupyter Notebook and SLURM REST API.
 
-There are **two setup stages** depending on whether your SLURM cluster is already deployed:
+There are **two setup paths**, depending on whether your SLURM cluster has already been deployed:
 
 - **[Pre-Cluster Deployment](./Setup-pre-cluster-deployment.md)**:
-   Ipynb notebook deployment steps **before deploying** the `af3-slurm.yaml` SLURM cluster.
+   Instructions for configuring and deploying the notebook environment before bringing up the `af3-slurm.yaml` SLURM cluster. Use this path if to starting from scratch or planning a clean deployment.
 
 - **[Post-Cluster Deployment](./Setup-post-cluster-deployment.md)**:  
-   Ipynb notebook deployment steps **after deploying** the `af3-slurm.yaml` SLURM cluster.
+   Instructions for launching the notebook environment after the `af3-slurm.yaml` SLURM cluster has already been deployed with SLURM REST support enabled. Use this path if the cluster is already running and was properly configured in advance.
 
 ## ▶️ 2. [Usage Guide: Step-by-Step Instructions](./Ipynb.md)
 
