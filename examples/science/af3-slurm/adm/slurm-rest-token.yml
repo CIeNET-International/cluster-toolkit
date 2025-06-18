@@ -49,18 +49,14 @@
     - name: Decode SLURM token value
       ansible.builtin.set_fact:
         slurm_token: "{{ slurm_token_encoded.content | b64decode | trim }}"
+      no_log: true
 
     - name: Check if GCP secret exists
       ansible.builtin.shell: |
         gcloud secrets describe "{{ slurm_rest_token_secret_name }}" --project="{{ project_id }}"
       register: gcp_secret_check
-      failed_when: false
       changed_when: false
-
-    - name: Create GCP secret if not exists
-      ansible.builtin.shell: |
-        gcloud secrets create "{{ slurm_rest_token_secret_name }}" --replication-policy="automatic" --project="{{ project_id }}"
-      when: gcp_secret_check.rc != 0
+      failed_when: gcp_secret_check.rc != 0
 
     - name: Save SLURM token to GCP Secret Manager
       ansible.builtin.shell: |
@@ -69,6 +65,6 @@
     rescue:
     - name: Debug failure
       debug:
-        msg: "Something went wrong during SLURM token generation or secret upload."
+        msg: "Error: {{ gcp_secret_check.stderr if gcp_secret_check is defined else 'Something went wrong during SLURM token generation or secret upload' }}"
 
     when: activate and slurm_rest_token_secret_name | length > 0

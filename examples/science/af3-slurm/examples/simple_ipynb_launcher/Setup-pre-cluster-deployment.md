@@ -40,7 +40,7 @@ slurm_rest_server_activate: true
 
 ### Configuring the SLURM REST API Token Secret Manager
 
-Set `slurm_rest_token_secret_name` value in the `af3-slurm-deployment.yaml` with the name of an existing secret in Secret Manager. Alternatively, you can specify a name for a secret that does not yet exist. If the specified secret name is new, this blueprint will automatically create it for you.
+Set `slurm_rest_token_secret_name` value in the `af3-slurm-deployment.yaml` with the name of an existing secret in Secret Manager. Please follow the guideline [here](https://cloud.google.com/secret-manager/docs/create-secret-quickstart) to create a Secret Manager.
 
 > This setting allows you to specify the name of a Google Cloud Secret Manager secret that holds your SLURM authentication token. Using Secret Manager is a secure way to manage sensitive credentials.
 
