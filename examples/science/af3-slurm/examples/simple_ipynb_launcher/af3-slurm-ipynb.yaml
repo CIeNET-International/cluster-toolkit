@@ -44,4 +44,4 @@ deployment_groups:
       machine_type: $(vars.notebook_machine_type)
       instance_image:
         project: deeplearning-platform-release
-        family: tf-latest-cpu
+        family: tf-ent-latest-cpu-ubuntu-2204-py310-conda
