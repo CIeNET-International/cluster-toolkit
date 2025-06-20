@@ -1,9 +1,7 @@
-# Setup: Post-Cluster Deployment
-
-This guide explains how to deploy and access the Jupyter Notebook environment for AlphaFold **after the af3-slurm.yaml cluster has already been deployed** with SLURM REST support enabled.
+# Setup: Setup AF3 with Simple Ipynb Launcher - PART 2: IPython notebook setup
+This guide explains how to deploy and access the Jupyter Notebook environment for AlphaFold **after the af3-slurm.yaml cluster has been deployed** with **SLURM REST support enabled**. If you have not followed the steps outlined in [Setup-pre-cluster-deployment.md](./Setup-pre-cluster-deployment.md) before, please do so before continuing.
 
 ## Prerequisites
-
 Before proceeding, ensure the following configuration values were set correctly in your `af3-slurm-deployment.yaml` file **prior to deploying the SLURM cluster**:
 
 ```yaml
@@ -12,18 +10,10 @@ slurm_rest_token_secret_name: "<your-secret-name>"            # Name of your Sec
 af3ipynb_bucket: "<your-pre-existing-bucket-name>"           # Existing Cloud Storage bucket name
 ```
 
-> [!WARNING]
-> This guide assumes that the SLURM cluster is already deployed with REST API support enabled—i.e., the values above were correctly set before deployment.
-> If any of the values above were omitted or misconfigured, you must destroy the cluster, update the deployment configuration, and redeploy. These settings are essential for enabling SLURM REST-based notebook functionality.
-> This document focuses exclusively on deploying and accessing the Jupyter Notebook environment **after** the cluster is running and properly configured. It does not cover modifying or redeploying the cluster.
-
-If you have **not yet deployed** the cluster, or if you need help setting the appropriate variables prior to deployment, refer to [Setup-pre-cluster-deployment.md](./Setup-pre-cluster-deployment.md) guide.
-
 ## Deploying the Jupyter Notebook Blueprint
 
 ### 1. Upload the required Notebook to the Cloud Storage Bucket
-
-First, access the controller node of your deployed SLURM cluster. Replace placeholders `<controller-node-name>` and `<your-zone>` with your actual node and zone.
+Access the controller node of your deployed cluster (replace placeholders `<controller-node-name>` and `<your-zone>` with your actual node and zone):
 
 ```bash
 gcloud compute ssh <controller-node-name> --zone=<your-zone>
@@ -37,12 +27,11 @@ ansible-playbook ipynb-upload-config.yml
 ```
 
 This step uploads the notebook (`slurm-rest-api-notebook.ipynb`) along with its required scripts and libraries to the bucket defined in the `af3ipynb_bucket` variable in `af3-slurm-deployment.yaml` file.
-Make sure that this bucket was created and specified during the SLURM cluster deployment process.
 
 ### 2. Grant Secret Access to the Notebook's Service Account
+**Where to run**: **On your local machine** (where the gcloud CLI is authenticated with access to your GCP project).
 
-This setting ensures that the notebook server can successfully retrieve the specified secret by name.
-Make sure the service account running the Jupyter Notebook instance (typically the Compute Engine default service account) has permission to access the Secret Manager secret that stores your SLURM REST token.
+This setting ensures that the notebook server can successfully retrieve the specified secret by name. For this you need to make sure that the service account running the Jupyter Notebook instance (typically the Compute Engine default service account) has permission to access the Secret Manager secret that stores your SLURM REST token.
 
 The following command grants the Compute Engine default service account the `roles/secretmanager.secretAccessor` role, allowing it to access the specified secret in Secret Manager. The attached condition always evaluates to true, ensuring access is consistently granted.
 
@@ -57,7 +46,8 @@ You can verify this configuration in the Secret Manager section of the Google Cl
 
 <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
 
-### 4. Launch the Notebook Environment
+### 3. Deploy the Notebook Environment
+**Where to run**: **On your local machine**, inside your cluster-toolkit directory.
 
 Deploy the Jupyter Notebook environment using the following command:
 
@@ -68,10 +58,7 @@ cd cluster-toolkit
 examples/science/af3-slurm/examples/simple_ipynb_launcher/af3-slurm-ipynb.yaml --auto-approve
 ```
 
-This brings up the Jupyter Notebook deployment.
-
-### 5. Access the Notebook via Vertex AI Workbench
-
+### 4. Access the Notebook via Vertex AI Workbench
 In the Google Cloud Console:
 
 1. Navigate to `Vertex AI` → `Workbench` → `Instances`
@@ -80,7 +67,8 @@ In the Google Cloud Console:
 
 3. Locate and open the `slurm-rest-api-notebook.ipynb` file. If you haven't modified the default value of `af3ipynb_bucket_local_mount` in the `af3-slurm-deployment.yaml`, the notebook should be available at `/home/jupyter/alphafold` folder.
 
-### 6. Verify REST Token Access
+### 5. Verify REST Token Access
+**Where to run**: **Inside the JupyterLab terminal** of your deployed Vertex AI Workbench instance.
 
 To verify that Secret Manager access is properly configured, open a terminal within JupyterLab and run the following command:
 
@@ -93,7 +81,6 @@ If the command returns the secret value successfully, it confirms that the noteb
 <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
 
 ## Teardown
-
 To remove the Jupyter Notebook deployment when it is no longer needed, run the following command:
 
 ```bash
@@ -105,7 +92,10 @@ To remove the Jupyter Notebook deployment when it is no longer needed, run the f
 > Additionally, any Cloud Storage buckets you created (via the CLI or console) will not be automatically deleted. You are responsible for cleaning them up manually to avoid unnecessary charges.
 > For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
 
-## Notes and Customization
+## Customization
 You can adjust the notebook setup behavior using blueprint variables in the deployment YAML.
 All configurations should be validated before running jobs.
 If further modifications to SLURM REST/API Server behavior are required, you must destroy and redeploy the cluster with the updated settings.
+
+## Using the environment
+Go to [Ipynb.md](./Ipynb.md) for documentation on how to use the IPython environment.
