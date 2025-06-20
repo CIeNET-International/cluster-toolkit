@@ -57,8 +57,7 @@ non-standard polymer amino acids are also tokenized like ligands, i.e. per-atom.
 For example, the g2-based inference partition suffices to process inputs of up to 2000 tokens. The a2-ultragpu partition can process
 inputs of up to 5120 tokens. It is furthermore possible to use unified memory, increasing the number of tokens that can be handled by a
 GPU at the expense of throughput. See
-[Other Hardware Configurations](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#other-hardware-configurations)
-in the original AlphaFold 3 documentation.
+[Inference Out-of-memory Condition](#known-limitations) on how to activate this option.
 
 For the three example launchers (see [Examples](#examples)), the solution sets the g2-based partition (infg2) as
 the default since this is the most cost-effective inference platform as long as your sequences fit into the
@@ -126,7 +125,7 @@ controller-node, not requiring any user interaction with the AlphaFold 3 environ
 Refer to [Service Launcher Instructions](examples/simple_service_launcher/README.md) for more details.
 
 ### Simple Ipynb Launcher
-The Simple Ipynb Launcher has a Jupyter Notebook that allows user interact with the AlphaFold 3 data pipeline and inference operation.
+The Simple Ipynb Launcher has a Jupyter Notebook that allows a user to interact with the AlphaFold 3 High Throughput solution via Slurm's REST-API.
 
 Refer to [Ipynb Launcher Instructions](examples/simple_ipynb_launcher/README.md) for more details.
 
@@ -156,7 +155,7 @@ To generate a cost estimate based on your projected usage, use the
 ## Known Limitations
 This solution currently has the following known limitations:
 - **Data Pipeline Out-of-memory Condition**: For certain amino-acid input sequences the Jackhmmer software that is used in the Datapipeline step is known to produce too many outputs causing it to run out of memory. In the current solution, these jobs are eventually terminated through the job runtime limit and are marked as failed. Running these jobs with more per-job memory in most cases does not resolve the issue. Resolution to this requires modifications of the Jackhmmer software and will be addressed in future versions of the solution. Mitigation: users can run with an input JSON that provides their own MSA, thus skipping the JackHmmer run for this input
-- <code>Inference Out-of-memory Condition</code>: Inference also encountered an "Out of Memory" issue, similar to the data pipeline. While not all sequences can be handled with this approach, some can be resolved by enabling [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) . To do this, set the following variable in `af3-slurm-deployment.yaml`:
+- **Inference Out-of-memory Condition**: The inference can also encountered an "Out of Memory" condition, similar to the data pipeline. Mitigation: while not all sequences can be handled with this approach, you can trade-off runtime for memory and activate the [unified memory](https://github.com/google-deepmind/alphafold3/blob/main/docs/performance.md#unified-memory) feature. To do this, set the following variable in `af3-slurm-deployment.yaml`:
 
   ```yaml
   inference_enable_unified_memory: true
@@ -170,7 +169,7 @@ Inference step requires more memory than available on the chosen GPU partition. 
 one of the inference partitions with larger GPU memory.
 - **No Dynamic Timeout**: The provided examples currently use global timeout settings for the Datapipeline and
 Inference partitions respectively. You can modify these timeouts if you use substantially larger input sequences,
-however, weigh this in conjunction with the **Out-of-memory Condition**.
+however, weigh this in conjunction with the **Datapipeline Out-of-memory Condition**.
 
 ***
 
@@ -469,7 +468,7 @@ vars:
   ... #more settings, consult the file af3-slurm-deployment.yaml
 ```
 
-#### Deploy Ipynb notebook launcher
+#### Special Steps for Ipynb Notebook launcher (Optional)
 If you intend to launch the AF3 solution with the REST API and IPython Notebook, please complete the additional configuration steps outlined in the [IPython Notebook launcher deployment documentation](./examples/simple_ipynb_launcher/Setup-pre-cluster-deployment.md).
 
 #### Deploy Slurm cluster
