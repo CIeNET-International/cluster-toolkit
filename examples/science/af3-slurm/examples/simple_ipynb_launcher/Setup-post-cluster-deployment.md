@@ -29,7 +29,7 @@ ansible-playbook ipynb-upload-config.yml
 This step uploads the notebook (`slurm-rest-api-notebook.ipynb`) along with its required scripts and libraries to the bucket defined in the `af3ipynb_bucket` variable in `af3-slurm-deployment.yaml` file.
 
 ### 2. Grant Secret Access to the Notebook's Service Account
-**Where to run**: **On your local machine** (where the gcloud CLI is authenticated with access to your GCP project).
+**Where to run**: **On the system where you executed `gcluster`** (where the `gcloud` CLI is authenticated with access to your GCP project).
 
 This setting ensures that the notebook server can successfully retrieve the specified secret by name. For this you need to make sure that the service account running the Jupyter Notebook instance (typically the Compute Engine default service account) has permission to access the Secret Manager secret that stores your SLURM REST token.
 
@@ -47,7 +47,7 @@ You can verify this configuration in the Secret Manager section of the Google Cl
 <img src="adm/secret-manager.png" alt="secret-manager" width="1000">
 
 ### 3. Deploy the Notebook Environment
-**Where to run**: **On your local machine**, inside your cluster-toolkit directory.
+**Where to run**: **On the system where you executed `gcluster`**, under your `cluster-toolkit` directory.
 
 Deploy the Jupyter Notebook environment using the following command:
 
@@ -65,10 +65,15 @@ In the Google Cloud Console:
 
 2. Open the JupyterLab interface for the newly deployed instance
 
-3. Locate and open the `slurm-rest-api-notebook.ipynb` file. If you haven't modified the default value of `af3ipynb_bucket_local_mount` in the `af3-slurm-deployment.yaml`, the notebook should be available at `/home/jupyter/alphafold` folder.
+3. Locate and open the `slurm-rest-api-notebook.ipynb` file. If you haven't modified the default value of `af3ipynb_bucket_local_mount` in the `af3-slurm-deployment.yaml`, the notebook files will be mounted to `/home/jupyter/alphafold` on the Jupyter notebook system.
+
+    When you first connect to Jupyter Notebook, it only shows the alphafold folder — this can appear as if it's located at `/alphafold`. In reality, Jupyter starts in the `/home/jupyter` directory, and the `alphafold` folder is located inside it.
+
+    So while it looks like `/alphafold` in the interface, the actual path is `/home/jupyter/alphafold`.
 
 ### 5. Verify REST Token Access
-**Where to run**: **Inside the JupyterLab terminal** of your deployed Vertex AI Workbench instance.
+**Where to run**: **On the system where you executed `gcluster`** (where the `gcloud` CLI is authenticated with access to your GCP project, similar to step [Grant Secret Access to the Notebook's Service Account](#2-grant-secret-access-to-the-notebooks-service-account)
+).
 
 To verify that Secret Manager access is properly configured, open a terminal within JupyterLab and run the following command:
 
@@ -80,22 +85,22 @@ If the command returns the secret value successfully, it confirms that the noteb
 
 <img src="adm/rest_api.png" alt="slrum rest api" width="1000">
 
-## Teardown
-To remove the Jupyter Notebook deployment when it is no longer needed, run the following command:
-
-```bash
-./gcluster destroy af3-slurm-ipynb --auto-approve
-```
-
-> [!WARNING]
-> If you do not destroy the Jupyter Notebook deployment, it may continue to incur costs.
-> Additionally, any Cloud Storage buckets you created (via the CLI or console) will not be automatically deleted. You are responsible for cleaning them up manually to avoid unnecessary charges.
-> For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).
+## Using the environment
+Go to [Ipynb.md](./Ipynb.md) for documentation on how to use the IPython environment.
 
 ## Customization
 You can adjust the notebook setup behavior using blueprint variables in the deployment YAML.
 All configurations should be validated before running jobs.
 If further modifications to SLURM REST/API Server behavior are required, you must destroy and redeploy the cluster with the updated settings.
 
-## Using the environment
-Go to [Ipynb.md](./Ipynb.md) for documentation on how to use the IPython environment.
+## Teardown
+To remove the Jupyter Notebook deployment when it is no longer needed, run the following command:
+
+    ```bash
+    ./gcluster destroy af3-slurm-ipynb --auto-approve
+    ```
+
+    > [!WARNING]
+    > If you do not destroy the Jupyter Notebook deployment, it may continue to incur costs.
+    > Additionally, any Cloud Storage buckets you created (via the CLI or console) will not be automatically deleted. You are responsible for cleaning them up manually to avoid unnecessary charges.
+    > For deleting the buckets consult [Delete buckets](https://cloud.google.com/storage/docs/deleting-buckets).

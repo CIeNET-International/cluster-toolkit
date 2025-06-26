@@ -412,7 +412,6 @@ terraform_backend_defaults:
 
 vars:
   # Define overall deployment variables
-  deployment_name: af3-slurm         # adjust if necessary
   project_id:  <PROJEC_ID>           # supply existing project id
   region: us-central1                # supply region with C3D-highmem and GPU capacity
   zone: us-central1-a                # supply zone with C3D-highmem and GPU capacity

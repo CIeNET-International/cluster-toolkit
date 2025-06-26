@@ -10,3 +10,18 @@ Please note that the launcher needs 2 specific setup steps:
 
 ## Usage Guide
 For usage of the Ipynb Launcher consult the [Step-by-Step Instructions](./Ipynb.md)
+
+## Known Limitations
+You may encounter the following problems while using the notebook.
+
+### Warning during dependency installation
+You may encounter the following warning during dependency installation:
+
+```text
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+google-cloud-bigtable 1.7.3 requires grpc-google-iam-v1<0.13dev,>=0.12.3, but you have grpc-google-iam-v1 0.14.2 which is incompatible
+```
+
+**Resolution**: This warning can be **safely ignored**.
+
+The version mismatch does not impact the functionality required by this project. The `google-cloud-bigtable` package is not used in any critical code path, and no issues have been observed during execution.
