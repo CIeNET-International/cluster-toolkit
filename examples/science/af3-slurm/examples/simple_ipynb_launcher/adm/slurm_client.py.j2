@@ -27,12 +27,58 @@ def is_valid_path(input_path: str, expected_prefix: str) -> bool:
     return os.path.isabs(input_path) and input_path.startswith(expected_prefix)
 
 
-def sanitised_name(name: str) -> str:
-    """Returns sanitised version of the name that can be used as a filename."""
+def sanitize_name(name: str) -> str:
     """Returns sanitised version of the name that can be used as a filename."""
     lower_spaceless_name = name.lower().replace(' ', '_')
     allowed_chars = set(string.ascii_lowercase + string.digits + '_-.')
     return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
+
+
+def retrieve_sanitised_input_file_name(input_file: str) -> Optional[str]:
+    """Retrieves a sanitised version of the input file name."""
+    if not os.path.exists(input_file):
+        raise FileNotFoundError(f"Input file '{input_file}' does not exist.")
+    try:
+        with open(input_file, 'r') as f:
+            parser = ijson.items(f, '')
+            try:
+                root = next(parser)
+            except StopIteration:
+                raise ValueError("Empty JSON file.")
+
+            # Case 1: root is a list
+            if isinstance(root, list):
+                if len(root) != 1:
+                    raise ValueError(
+                        "[ERROR] The AlphaFold Server format is not supported: the list must contain exactly one dictionary item.")
+                item = root[0]
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "[ERROR] Item in Alphafold Server item must be a dictionary.")
+
+            # Case 2: root is a dict
+            elif isinstance(root, dict):
+                item = root
+            else:
+                raise ValueError(
+                    "[ERROR] Top-level JSON must be a list or a dictionary.")
+
+            # Validate and extract 'name'
+            name = item.get('name')
+            if not isinstance(name, str):
+                raise ValueError(
+                    "[ERROR] 'name' key must exist and be a string.")
+
+            return sanitize_name(name)
+
+    except FileNotFoundError:
+        print(f"[ERROR] Input file '{input_file}' not found.")
+        raise FileNotFoundError(
+            f"[ERROR] Input file '{input_file}' not found.")
+    except Exception as e:
+        print(f"[ERROR] Error processing input file '{input_file}': {e}")
+        raise Exception(
+            f"[ERROR] Error processing input file '{input_file}': {e}")
 
 
 class AF3SlurmClient:
@@ -68,7 +114,7 @@ class AF3SlurmClient:
         self.slurm_base_url = f"http://{hostname}:{port}/slurm/{self.SLURM_API_VERSION}"
         self.slurmdb_base_url = f"http://{hostname}:{port}/slurmdb/{self.SLURM_API_VERSION}"
         self.token = token
-        
+
         # Af3 default config
         self.af3_config = {
             "datapipeline_timeout": "{{ default_datapipeline_timeout }}",
@@ -183,33 +229,17 @@ class AF3SlurmClient:
         inference_model_cif_output_path: Optional[str] = None
         inference_summary_confidences_output_path: Optional[str] = None
         inference_confidences_output_path: Optional[str] = None
-        try:
-            sanitised_input_name: Optional[str] = None
-            with open(input_file, "r") as f:
-                name = None
-                parser = ijson.parse(f)
-                for prefix, event, value in parser:
-                    if prefix == "name" and event == "string":
-                        name = value
-                        break
-                if not name:
-                    raise ValueError("Missing 'name' in input file.")
-                sanitised_input_name = sanitised_name(name)
 
-            inference_model_cif_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
-            inference_summary_confidences_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
-            inference_confidences_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
-        except FileNotFoundError:
-            print(f"[ERROR] Input file '{input_file}' not found.")
-            raise FileNotFoundError(
-                f"[ERROR] Input file '{input_file}' not found.")
-        except Exception as e:
-            print(f"[ERROR] Error processing input file '{input_file}': {e}")
-            raise Exception(
-                f"[ERROR] Error processing input file '{input_file}': {e}")
+        sanitised_input_name: Optional[str] = retrieve_sanitised_input_file_name(
+            input_file=input_file
+        )
+
+        inference_model_cif_output_path = os.path.join(
+            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
+        inference_summary_confidences_output_path = os.path.join(
+            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
+        inference_confidences_output_path = os.path.join(
+            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
 
         job_config = {
             "account": self.af3_config["service_user"],
@@ -261,25 +291,10 @@ class AF3SlurmClient:
                 f"{job_type}_result",  file_name, f"{timestamp}"
             )
 
-        datapipeline_output_file_path: Optional[str] = None
-        try:
-            sanitised_input_name: Optional[str] = None
-            with open(input_file, "r") as f:
-                name = None
-                parser = ijson.parse(f)
-                for prefix, event, value in parser:
-                    if prefix == "name" and event == "string":
-                        name = value
-                        break
-                if not name:
-                    raise ValueError("Missing 'name' in input file.")
-            sanitised_input_name = sanitised_name(name)
-            datapipeline_output_file_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
-        except Exception as e:
-            print(f"[ERROR] Error processing input file '{input_file}': {e}")
-            raise Exception(
-                f"[ERROR] Error processing input file '{input_file}': {e}")
+        sanitised_input_name = retrieve_sanitised_input_file_name(input_file)
+        datapipeline_output_file_path = os.path.join(
+            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
+
         job_config = {
             "account": self.af3_config["service_user"],
             "tasks": 1,
