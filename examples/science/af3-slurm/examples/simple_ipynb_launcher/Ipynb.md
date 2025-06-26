@@ -2,9 +2,25 @@
 
 **1. Uploading the Input Data:**
 
-Begin by uploading your input JSON file, which contains the data required by AlphaFold, either `datapipeline` or `inference` input file, to the Jupyter Notebook environment. You can usually do this using the file upload feature available within the notebook interface.
+Begin by uploading your input JSON file, which contains the data required by AlphaFold, either `datapipeline` or `inference` input file, to the Jupyter Notebook environment. You can usually do this using the file upload feature available within the notebook interface as shown by image below.
 
-   <img src="adm/upload_file.png" alt="upload file" width="400">
+   <img src="adm/upload_file.png" alt="try to upload file under the alphafold folder" width="400">
+
+When specifying the input file name (e.g., `fold_input.json`) during the configuration of your data pipeline or inference, it's crucial to reference the correct **relative file path**. Your files should be organized like this:
+
+```code
+alphafold/
+├── <your_input_file>.json
+└── slurm-rest-api-notebook.ipynb
+```
+
+The input JSON file should be in the `alphafold` folder.
+
+Usage:
+
+```python
+input_file= "fold_input.json"
+```
 
 **2. Running the Setup Cells (including System Configuration and SLURM Initialization):**
 
