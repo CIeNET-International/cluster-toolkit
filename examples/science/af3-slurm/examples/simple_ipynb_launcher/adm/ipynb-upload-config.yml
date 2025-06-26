@@ -65,6 +65,12 @@
       register: upload_notebook
       ignore_errors: true
 
+    - name: Upload fold_input_example.json to GCS
+      ansible.builtin.command:
+        cmd: gcloud storage cp {{ ipynb_setup_folder }}/fold_input_example.json gs://{{ af3ipynb_bucket }}/fold_input_example.json
+      register: upload_fold_input_example
+      ignore_errors: true
+
     - name: Upload slurm_info.json to GCS
       ansible.builtin.command:
         cmd: gcloud storage cp {{ slurm_rest_info_path }} gs://{{ af3ipynb_bucket }}/libs/slurm_info.json
@@ -84,6 +90,7 @@
               {'name': 'slurm_client.py', 'result': upload_slurm_client},
               {'name': '__init__.py', 'result': upload_init},
               {'name': 'slurm-rest-api-notebook.ipynb', 'result': upload_notebook},
+              {'name': 'fold_input_example.json', 'result': upload_fold_input_example},
               {'name': 'slurm_info.json', 'result': upload_slurm_info},
             ] | selectattr('result.failed', 'defined') | selectattr('result.failed') | list
           }}

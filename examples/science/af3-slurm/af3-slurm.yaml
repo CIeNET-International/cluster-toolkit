@@ -130,6 +130,9 @@ vars:
     destination: "/tmp/slurm_client.py.j2"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/slurm_client.py.j2"))
   - type: data
+    destination: "/tmp/fold_input_example.json"
+    source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/fold_input_example.json"))
+  - type: data
     destination: "/tmp/visualization.py"
     source: $(ghpc_stage("examples/simple_ipynb_launcher/adm/visualization.py"))
   - type: data
