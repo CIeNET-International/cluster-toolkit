@@ -106,6 +106,13 @@
       register: copy_visualization
       ignore_errors: true
 
+    - name: Copy fold_input_example.json
+      ansible.builtin.copy:
+        src: /tmp/fold_input_example.json
+        dest: "{{ ipynb_setup_folder }}/fold_input_example.json"
+      register: copy_fold_input_example
+
+      ignore_errors: true
     - name: Render slurm_client.py from template locally
       ansible.builtin.template:
         src: /tmp/slurm_client.py.j2
@@ -204,6 +211,7 @@
               {'name': 'notebook-requirements.txt', 'result': copy_requirements},
               {'name': 'visualization.py', 'result': copy_visualization},
               {'name': 'slurm_client.py', 'result': copy_slurm_client},
+              {'name': 'fold_input_example.json', 'result': copy_fold_input_example},
               {'name': 'slurm-rest-api-notebook.ipynb', 'result': copy_notebook},
               {'name': '__init__.py', 'result': copy_init},
               {'name': 'ipynb-upload-config.yml', 'result': copy_ipynb_upload_config},
