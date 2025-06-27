@@ -254,7 +254,7 @@ elif [ "$JOB_TYPE" = "inference" ]; then
 
     # Add JAX cache path if set
     if [ -n "$JAX_COMPILATION_CACHE_PATH" ]; then
-        job_specific_python_opts+=" --jax_compilation_cache_path='${JAX_COMPILATION_CACHE_PATH}'"
+        job_specific_python_opts+=" --jax_compilation_cache_dir='${JAX_COMPILATION_CACHE_PATH}'"
         apptainer_binds+=("--bind" "${JAX_COMPILATION_CACHE_PATH}")
         echo "Info: JAX cache enabled at ${JAX_COMPILATION_CACHE_PATH}"
     else
