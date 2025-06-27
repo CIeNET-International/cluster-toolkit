@@ -24,7 +24,7 @@ gcloud storage buckets create gs://${UNIQUE_JOB_BUCKET} \
 ```
 
 ### Configure Secret Manager
-The IPython notebook will need a secure connection with the Slurm REST API servers. We are using the Google Cloud Secret Manager to manage the necessary credentials in a secure way. Please follow the guideline [here](https://cloud.google.com/secret-manager/docs/create-secret-quickstart) to create a secret using Secret Manager.
+The IPython notebook will need a secure connection with the Slurm REST API servers. We are using the Google Cloud Secret Manager to manage the necessary credentials in a secure way. Please follow the guideline [here](https://cloud.google.com/secret-manager/docs/configuring-secret-manager) to enable and create a secret using Secret Manager.
 
 You do not need to manually add any data to the secret; the SLURM token will be automatically populated by the system.
 
