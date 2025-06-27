@@ -26,9 +26,13 @@ from typing import Dict, Tuple, List
 
 def plot_pae_matrix(pae: np.ndarray, token_chain_ids: str) -> None:
     df = pd.DataFrame(pae)
-    fig = px.imshow(df, color_continuous_scale='Viridis',
-                    labels={'color': 'PAE'},
-                    title='Predicted Aligned Error (PAE) Matrix')
+    fig = px.imshow(
+        df,
+        color_continuous_scale=[(0.0, 'green'), (1.0, 'white')],
+        labels={'color': 'PAE'},
+        title='Predicted Aligned Error (PAE) Matrix'
+    )
+
     # Draw chain boundaries if available
     if token_chain_ids:
         chain_boundaries = []
@@ -45,7 +49,7 @@ def plot_pae_matrix(pae: np.ndarray, token_chain_ids: str) -> None:
                 y0=0,
                 x1=boundary,
                 y1=len(token_chain_ids),
-                line=dict(color="red", width=1)
+                line=dict(color="black", width=1)
             )
             fig.add_shape(
                 type="line",
@@ -53,8 +57,9 @@ def plot_pae_matrix(pae: np.ndarray, token_chain_ids: str) -> None:
                 y0=boundary,
                 x1=len(token_chain_ids),
                 y1=boundary,
-                line=dict(color="red", width=1)
+                line=dict(color="black", width=1)
             )
+
     fig.update_layout(autosize=True)
     fig.show()
 
