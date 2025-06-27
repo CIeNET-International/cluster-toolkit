@@ -205,7 +205,7 @@
     "datapipeline_partition_name = \"{{ default_datapipeline_partition_name }}\"\n",
     "\n",
     "# Assign `input_file` with datapipeline input file path\n",
-    "datapipeline_input_file= \"\" # Replace with your input file path (relative path from the jupyter notebook directory)\n"
+    "input_file= \"\" # Replace with your input file path (relative path from the jupyter notebook directory)\n"
    ]
   },
   {
@@ -217,7 +217,7 @@
     "# Submit a datapipeline job\n",
     "datapipeline_submit_job_response = client.submit_data_pipeline_job(\n",
     "    partition_name=datapipeline_partition_name, \n",
-    "    input_file=datapipeline_input_file\n",
+    "    input_file=input_file\n",
     ")\n",
     "print(\"Submit Job Response:\", json.dumps(datapipeline_submit_job_response,indent=4))"
    ]
