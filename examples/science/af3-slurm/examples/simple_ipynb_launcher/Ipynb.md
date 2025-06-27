@@ -6,20 +6,27 @@ Begin by uploading your input JSON file, which contains the data required by Alp
 
    <img src="adm/upload_file.png" alt="try to upload file under the alphafold folder" width="400">
 
-When specifying the input file name (e.g., `fold_input.json`) during the configuration of your data pipeline or inference, it's crucial to reference the correct **relative file path**. Your files should be organized like this:
+Ensure your input JSON file is placed in the correct location **relative to your Jupyter Notebook file**. Your project directory should be structured like this:
 
 ```code
 alphafold/
-├── <your_input_file>.json
+├── <uploaded_file>.json
+├── fold_input.json # Example input file (provided)
 └── slurm-rest-api-notebook.ipynb
 ```
 
-The input JSON file should be in the `alphafold` folder.
+When configuring your data pipeline or inference process, use the correct **relative file path to reference the input JSON**. We provide an example input file of data pipeline process named `fold_input.json` to help you get started quickly.
 
-Usage:
+Since both the notebook and the input file are in the same directory (`alphafold/`), you can specify the file like this in your notebook code:
 
 ```python
 input_file= "fold_input.json"
+```
+
+If you're uploading your own file, simply replace the `input_file` variable with the name of your uploaded file:
+
+```python
+input_file = "<uploaded_file>.json"
 ```
 
 **2. Running the Setup Cells (including System Configuration and SLURM Initialization):**

@@ -27,50 +27,55 @@ def is_valid_path(input_path: str, expected_prefix: str) -> bool:
     return os.path.isabs(input_path) and input_path.startswith(expected_prefix)
 
 
-def sanitize_name(name: str) -> str:
+def sanitise_name(name: str) -> str:
     """Returns sanitised version of the name that can be used as a filename."""
     lower_spaceless_name = name.lower().replace(' ', '_')
     allowed_chars = set(string.ascii_lowercase + string.digits + '_-.')
     return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
 
 
-def retrieve_sanitised_input_file_name(input_file: str) -> Optional[str]:
+def retrieve_sanitised_input_file_name(input_file: str) -> Optional[List[str]]:
     """Retrieves a sanitised version of the input file name."""
     if not os.path.exists(input_file):
         raise FileNotFoundError(f"Input file '{input_file}' does not exist.")
     try:
-        with open(input_file, 'r') as f:
+        with open(input_file, 'r', encoding="utf-8") as f:
             parser = ijson.items(f, '')
             try:
                 root = next(parser)
             except StopIteration:
                 raise ValueError("Empty JSON file.")
 
-            # Case 1: root is a list
-            if isinstance(root, list):
-                if len(root) != 1:
-                    raise ValueError(
-                        "[ERROR] The AlphaFold Server format is not supported: the list must contain exactly one dictionary item.")
-                item = root[0]
-                if not isinstance(item, dict):
-                    raise ValueError(
-                        "[ERROR] Item in Alphafold Server item must be a dictionary.")
-
-            # Case 2: root is a dict
-            elif isinstance(root, dict):
-                item = root
-            else:
+            if not isinstance(root, list) and not isinstance(root, dict):
                 raise ValueError(
                     "[ERROR] Top-level JSON must be a list or a dictionary.")
 
+            items: Optional[List[Dict]] = None
+            if isinstance(root, list):
+                if len(root) <= 0:
+                    raise ValueError(
+                        "[ERROR] The AlphaFold Server format is not supported: the list must contain at least one dictionary item.")
+                items = root
+
+            # Case 2: root is a dict
+            elif isinstance(root, dict):
+                items = [root]
+
             # Validate and extract 'name'
-            name = item.get('name')
-            if not isinstance(name, str):
-                raise ValueError(
-                    "[ERROR] 'name' key must exist and be a string.")
-
-            return sanitize_name(name)
-
+            sanitised_name_list = []
+            for item in items:
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "Item in Alphafold Format must be a dictionary.")
+                if 'name' not in item:
+                    raise ValueError(
+                        "'name' key must exist in the dictionary.")
+                name = item.get('name')
+                if not isinstance(name, str) or not name:
+                    raise ValueError(
+                        "'name' key must exist, contains value and be a string.")
+                sanitised_name_list.append(sanitise_name(name))
+            return sanitised_name_list
     except FileNotFoundError:
         print(f"[ERROR] Input file '{input_file}' not found.")
         raise FileNotFoundError(
@@ -226,21 +231,6 @@ class AF3SlurmClient:
             output_dir = os.path.join(
                 f"{job_type}_result", file_name, f"{timestamp}")
 
-        inference_model_cif_output_path: Optional[str] = None
-        inference_summary_confidences_output_path: Optional[str] = None
-        inference_confidences_output_path: Optional[str] = None
-
-        sanitised_input_name: Optional[str] = retrieve_sanitised_input_file_name(
-            input_file=input_file
-        )
-
-        inference_model_cif_output_path = os.path.join(
-            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
-        inference_summary_confidences_output_path = os.path.join(
-            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
-        inference_confidences_output_path = os.path.join(
-            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
-
         job_config = {
             "account": self.af3_config["service_user"],
             "tasks": 1,
@@ -264,16 +254,31 @@ class AF3SlurmClient:
         response = self.submit_base_job(
             job_config, job_type, script_options, input_file, output_dir)
 
-        response["cif_output_path"] = inference_model_cif_output_path
-        response["summary_confidences_output_path"] = inference_summary_confidences_output_path
-        response["confidences_output_path"] = inference_confidences_output_path
-        print(
-            f"[INFO] Inference model CIF output path : {inference_model_cif_output_path}")
-        print(
-            f"[INFO] Inference confidences output path : {inference_confidences_output_path}")
-        print(
-            f"[INFO] Inference summary confidences output path : {inference_summary_confidences_output_path}")
+        sanitised_input_name_list: Optional[List[str]] = retrieve_sanitised_input_file_name(
+            input_file=input_file
+        )
+        output_path_list: List[Dict] = []
+        for sanitised_input_name in sanitised_input_name_list:
+            inference_model_cif_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
+            inference_summary_confidences_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
+            inference_confidences_output_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
+            output_path_list.append({
+                "model_cif": inference_model_cif_output_path,
+                "summary_confidences": inference_summary_confidences_output_path,
+                "confidences": inference_confidences_output_path
+            })
 
+            print(f"[INFO] Output path for input file: {sanitised_input_name}")
+            print(
+                f"         ├── Inference model CIF output path : {inference_model_cif_output_path}")
+            print(
+                f"         ├── Inference confidences output path : {inference_confidences_output_path}")
+            print(
+                f"         └── Inference summary confidences output path : {inference_summary_confidences_output_path}")
+        response["output_path_list"] = output_path_list
         return response
 
     def submit_data_pipeline_job(self,  input_file: str, partition_name: str, output_dir: Optional[str] = None) -> Optional[Dict]:
@@ -290,10 +295,6 @@ class AF3SlurmClient:
             output_dir = os.path.join(
                 f"{job_type}_result",  file_name, f"{timestamp}"
             )
-
-        sanitised_input_name = retrieve_sanitised_input_file_name(input_file)
-        datapipeline_output_file_path = os.path.join(
-            output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
 
         job_config = {
             "account": self.af3_config["service_user"],
@@ -316,7 +317,20 @@ class AF3SlurmClient:
         response = self.submit_base_job(
             job_config, job_type, script_options, input_file, output_dir
         )
-        response["datapipeline_output_path"] = datapipeline_output_file_path
+        sanitised_input_name_list = retrieve_sanitised_input_file_name(
+            input_file)
+        output_path_list: List[Dict] = []
+        for sanitised_input_name in sanitised_input_name_list:
+            datapipeline_output_file_path = os.path.join(
+                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
+            output_path_list.append({
+                "output_path": datapipeline_output_file_path
+            })
+            print(f"[INFO] Output path for input file: {sanitised_input_name}")
+            print(
+                f"         └── Datapipeline output path : {datapipeline_output_file_path}")
+
+        response["output_path_list"] = output_path_list
         print(
             f"[INFO] Datapipeline output path : {datapipeline_output_file_path}")
         return response
