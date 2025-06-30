@@ -31,29 +31,23 @@ The version mismatch does not impact the functionality required by this project.
 ### Resource Unavailability (Out of Capacity)
 
 **Description**:  
-Your job is queued but not executed because the cloud provider (e.g., GCP) can't provision the required compute nodes. This is often due to a temporary lack of available resources in the chosen region or zone.
+Your job is queued but not executed because GCP can't provision the required compute nodes. This is often due to a temporary lack of available resources in the chosen region or zone.
 
 **Resolution**:
-- Check the **Controller Logs**:  
+- Check the Slurm **Controller Node** Log:  
   Log on to the controller machine for your cluster to see detailed error messages like  
   `"GCP Error: Zone does not currently have sufficient capacity for resources"`.
 - **Wait and Re-check**:  
-  For temporary resource shortages, wait **5–10 minutes** and then re-run the "check job status" cell in your Jupyter notebook. Resources might become available and allow your job to proceed.
+  For temporary resource shortages, wait **5–10 minutes** and then re-run the `get_job_state` cell in your Jupyter notebook. Resources might become available and allow your job to proceed.
 
 ### Node Creation In Progress
 
 **Description**:  
-After your job is submitted, it takes time for the cluster to spin up new nodes. You might see a `NODE_FAIL` status if nodes are still being created and are not yet ready.
+After submitting your job, the cluster may take several minutes to provision and initialize new compute nodes. During this time, your job might temporarily show a status like `NODE_FAIL` if the nodes are not yet fully ready or registered.
 
 **Resolution**:
-- Monitor the **Controller Logs** for status updates.
-- **Wait 5–10 minutes**, then recheck your job status to see if nodes have become available.
-
----
-
-### Runtime-Related Issues
-
-These issues occur once your job attempts to run on the allocated nodes.
+- Check the Slurm **Controller Node** Logs for detailed status updates.
+- **Wait 5–10 minutes**, then recheck your job status to see if the nodes have become available and the job is progressing.
 
 ### Input File Format Error
 
@@ -61,8 +55,19 @@ These issues occur once your job attempts to run on the allocated nodes.
 Your job might fail immediately if the input file format is incorrect or if the file is corrupted.
 
 **Resolution**:
-- Review the **Job Logs** to identify input file issues.
-- Ensure the input file meets the expected format and isn't corrupted.
+- Review the **Job Logs** to identify issues related to the input file. Logs are located at:
+  - `/home/af3ipynb/datapipeline_result/<input_file_name>/<timestamp>/slurm_logs/job_<job_id>/*.txt` for **data pipeline** process
+  - `/home/af3ipynb/inference_result/<input_file_name>/<timestamp>/slurm_logs/job_<job_id>/*.txt` for **inference** process.
+  
+  Each directory contains:
+  - `err.txt` – captures detailed **STDERR** output.
+  - `out.txt` – captures **STDOUT** output.
+
+- Ensure that the input file:
+  - Conforms to the expected format. Currently supported formats include alphafoldserver and alphafold3.
+  - Is not corrupted.
+
+For detailed input file requirements, please refer to [Alphafold Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md#alphafold-server-json-compatibility).
 
 ### Out of Memory (OOM) Issue
 
