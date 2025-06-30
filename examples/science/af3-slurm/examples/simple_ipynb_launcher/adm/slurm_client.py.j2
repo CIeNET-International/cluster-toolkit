@@ -213,6 +213,10 @@ class AF3SlurmClient:
 
     def submit_inference_job(self, input_file: str, partition_name: str, enable_unified_memory: Optional[bool] = None, output_dir: Optional[str] = None) -> Optional[Dict]:
         """Submits an inference job to Slurm server."""
+
+        if not input_file:
+            raise ValueError("Input file must be provided.")
+
         partition_config = self.PARTITION_CONFIG_MAP.get(partition_name, {})
         if not partition_config:
             raise ValueError(
@@ -258,7 +262,10 @@ class AF3SlurmClient:
             input_file=input_file
         )
         output_path_list: List[Dict] = []
-        for sanitised_input_name in sanitised_input_name_list:
+
+        print(
+            f"[INFO] Inference output path for input file: {input_file}")
+        for index, sanitised_input_name in enumerate(sanitised_input_name_list):
             inference_model_cif_output_path = os.path.join(
                 output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
             inference_summary_confidences_output_path = os.path.join(
@@ -270,19 +277,21 @@ class AF3SlurmClient:
                 "summary_confidences": inference_summary_confidences_output_path,
                 "confidences": inference_confidences_output_path
             })
-
-            print(f"[INFO] Output path for input file: {sanitised_input_name}")
             print(
-                f"         ├── Inference model CIF output path : {inference_model_cif_output_path}")
+                f"         ├── Model CIF output path {index+1} : {inference_model_cif_output_path}")
             print(
-                f"         ├── Inference confidences output path : {inference_confidences_output_path}")
+                f"         ├── Confidences output path {index+1} : {inference_confidences_output_path}")
             print(
-                f"         └── Inference summary confidences output path : {inference_summary_confidences_output_path}")
+                f"         └── Summary confidences output path {index+1} : {inference_summary_confidences_output_path}")
         response["output_path_list"] = output_path_list
         return response
 
     def submit_data_pipeline_job(self,  input_file: str, partition_name: str, output_dir: Optional[str] = None) -> Optional[Dict]:
-        """Submits an data pipeline job to Slurm server."""
+        """Submits a data pipeline job to Slurm server."""
+
+        if not input_file:
+            raise ValueError("Input file must be provided.")
+
         partition_config = self.PARTITION_CONFIG_MAP.get(partition_name, {})
         if not partition_config:
             raise ValueError(
@@ -320,15 +329,17 @@ class AF3SlurmClient:
         sanitised_input_name_list = retrieve_sanitised_input_file_name(
             input_file)
         output_path_list: List[Dict] = []
-        for sanitised_input_name in sanitised_input_name_list:
+
+        print(
+            f"[INFO] Datapipeline output path for input file: {input_file}")
+        for index, sanitised_input_name in enumerate(sanitised_input_name_list):
             datapipeline_output_file_path = os.path.join(
                 output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
             output_path_list.append({
                 "output_path": datapipeline_output_file_path
             })
-            print(f"[INFO] Output path for input file: {sanitised_input_name}")
             print(
-                f"         └── Datapipeline output path : {datapipeline_output_file_path}")
+                f"         └── Path {index+1} : {datapipeline_output_file_path}")
 
         response["output_path_list"] = output_path_list
         return response

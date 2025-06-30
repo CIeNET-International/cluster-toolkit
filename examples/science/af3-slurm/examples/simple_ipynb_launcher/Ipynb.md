@@ -10,24 +10,20 @@ Ensure your input JSON file is placed in the correct location **relative to your
 
 ```code
 alphafold/
-├── <uploaded_file>.json
-├── fold_input.json # Example input file (provided)
+├── <uploaded_file>.json # Your manually uploaded input file
+├── fold_input_example.json # Example input file (provided)
 └── slurm-rest-api-notebook.ipynb
 ```
 
-When configuring your data pipeline or inference process, use the correct **relative file path to reference the input JSON**. We provide an example input file of data pipeline process named `fold_input.json` to help you get started quickly.
+When configuring your data pipeline or inference process, ensure you use the correct ***relative file path*** to reference the input JSON. To help you get started, we provide an example input file for the data pipeline process named `fold_input_example.json`.
 
-Since both the notebook and the input file are in the same directory (`alphafold/`), you can specify the file like this in your notebook code:
-
-```python
-input_file= "fold_input.json"
-```
-
-If you're uploading your own file, simply replace the `input_file` variable with the name of your uploaded file:
+If your input file is located in the same directory(under `/alphafold/` directory) with `fold_input_example.json`, simply update the `input_file` variable in the notebook code to reflect the name of your uploaded file:
 
 ```python
-input_file = "<uploaded_file>.json"
+input_file= "fold_input_example.json" # Replace this with your actual file name
 ```
+
+Make sure the file is properly formatted and matches the expected schema (see [AlphaFold Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md#alphafold-server-json-compatibility) for reference).
 
 **2. Running the Setup Cells (including System Configuration and SLURM Initialization):**
 
