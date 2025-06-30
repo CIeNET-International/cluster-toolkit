@@ -34,8 +34,8 @@ def sanitise_name(name: str) -> str:
     return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
 
 
-def retrieve_sanitised_input_file_name(input_file: str) -> Optional[List[str]]:
-    """Retrieves a sanitised version of the input file name."""
+def retrieve_sanitised_sequence_name(input_file: str) -> Optional[List[str]]:
+    """Retrieves a list of sanitised sequence name from given input file."""
     if not os.path.exists(input_file):
         raise FileNotFoundError(f"Input file '{input_file}' does not exist.")
     try:
@@ -258,31 +258,32 @@ class AF3SlurmClient:
         response = self.submit_base_job(
             job_config, job_type, script_options, input_file, output_dir)
 
-        sanitised_input_name_list: Optional[List[str]] = retrieve_sanitised_input_file_name(
+        sanitised_sequence_name_list: Optional[List[str]] = retrieve_sanitised_sequence_name(
             input_file=input_file
         )
         output_path_list: List[Dict] = []
 
-        print(
-            f"[INFO] Inference output path for input file: {input_file}")
-        for index, sanitised_input_name in enumerate(sanitised_input_name_list):
+        for sanitised_sequence_name in sanitised_sequence_name_list:
+
+            print(
+                f"[INFO] Inference output path for sequence: {input_file}")
             inference_model_cif_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_model.cif")
+                output_dir, f"{sanitised_sequence_name}", f"{sanitised_sequence_name}_model.cif")
             inference_summary_confidences_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_summary_confidences.json")
+                output_dir, f"{sanitised_sequence_name}", f"{sanitised_sequence_name}_summary_confidences.json")
             inference_confidences_output_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_confidences.json")
+                output_dir, f"{sanitised_sequence_name}", f"{sanitised_sequence_name}_confidences.json")
             output_path_list.append({
                 "model_cif": inference_model_cif_output_path,
                 "summary_confidences": inference_summary_confidences_output_path,
                 "confidences": inference_confidences_output_path
             })
             print(
-                f"         ├── Model CIF output path {index+1} : {inference_model_cif_output_path}")
+                f"         ├── Model CIF output path           : {inference_model_cif_output_path}")
             print(
-                f"         ├── Confidences output path {index+1} : {inference_confidences_output_path}")
+                f"         ├── Confidences output path         : {inference_confidences_output_path}")
             print(
-                f"         └── Summary confidences output path {index+1} : {inference_summary_confidences_output_path}")
+                f"         └── Summary confidences output path : {inference_summary_confidences_output_path}")
         response["output_path_list"] = output_path_list
         return response
 
@@ -326,20 +327,20 @@ class AF3SlurmClient:
         response = self.submit_base_job(
             job_config, job_type, script_options, input_file, output_dir
         )
-        sanitised_input_name_list = retrieve_sanitised_input_file_name(
+        sanitised_sequence_name_list = retrieve_sanitised_sequence_name(
             input_file)
         output_path_list: List[Dict] = []
 
-        print(
-            f"[INFO] Datapipeline output path for input file: {input_file}")
-        for index, sanitised_input_name in enumerate(sanitised_input_name_list):
+        for sanitised_sequence_name in sanitised_sequence_name_list:
+            print(
+                f"[INFO] Datapipeline output path for sequence: {sanitised_sequence_name}")
             datapipeline_output_file_path = os.path.join(
-                output_dir, f"{sanitised_input_name}", f"{sanitised_input_name}_data.json")
+                output_dir, f"{sanitised_sequence_name}", f"{sanitised_sequence_name}_data.json")
             output_path_list.append({
                 "output_path": datapipeline_output_file_path
             })
             print(
-                f"         └── Path {index+1} : {datapipeline_output_file_path}")
+                f"         └── Path: {datapipeline_output_file_path}")
 
         response["output_path_list"] = output_path_list
         return response
