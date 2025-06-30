@@ -201,3 +201,27 @@ The job requires **more memory** than is available on the assigned compute node(
       ```
 
    - You may also consider requesting more powerful machine types depending on your platform’s options.
+
+### Notebook Save Error
+
+  <img src="adm/notebook-save-failed.png" alt="notebook save failed" width="1000">
+
+#### Symptom
+The notebook file fails to save, and an error message appears. This can also happen suddenly due to an automated save triggered by Jupyter.
+
+#### Cause
+This issue can occur due to network connectivity problems, insufficient disk space, or lack of write permissions in the save location.
+
+#### Resolution
+
+- Verify your network connection is stable.
+
+- Ensure you have write permissions to the save directory.
+
+- Check that there is enough disk space available.
+
+- Try saving the notebook again manually.
+
+- To avoid losing work, save your current progress manually to a different file before retrying. This way, you can decide whether to overwrite the original notebook.
+
+- You may choose to **ignore this error**, but note that unsaved changes could be lost.
