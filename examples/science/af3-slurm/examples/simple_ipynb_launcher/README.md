@@ -11,70 +11,193 @@ Please note that the launcher needs 2 specific setup steps:
 ## Usage Guide
 For usage of the Ipynb Launcher consult the [Step-by-Step Instructions](./Ipynb.md)
 
-## Known Issues
-You may encounter the following problems while using the notebook.
+## Known Issues & How to Fix Them
+You may encounter the following problems while using the notebook. Each issue includes specific symptoms, causes, and actionable resolutions.
 
 ### Warning during dependency installation
 
-**Description**:
-You may encounter the following warning during dependency installation:
+#### Symptom
+During Python dependency installation, you see a warning like:
 
 ```text
-ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. ...
 google-cloud-bigtable 1.7.3 requires grpc-google-iam-v1<0.13dev,>=0.12.3, but you have grpc-google-iam-v1 0.14.2 which is incompatible
 ```
 
-**Resolution**: This warning can be **safely ignored**.
+#### Cause
+Pip detects a version mismatch between `grpc-google-iam-v1` and `google-cloud-bigtable`.
 
-The version mismatch does not impact the functionality required by this project. The `google-cloud-bigtable` package is not used in any critical code path, and no issues have been observed during execution.
+#### Resolution
+**Ignore This Warning**. This package `google-cloud-bigtable` is not critical to the notebook’s core functionality. There is no known runtime impact or errors caused by this mismatch.
 
 ### Resource Unavailability (Out of Capacity)
 
-**Description**:  
-Your job is queued but not executed because GCP can't provision the required compute nodes. This is often due to a temporary lack of available resources in the chosen region or zone.
+#### Symptom
+Your Slurm job is queued but not running for an unusually long time.
 
-**Resolution**:
-- Check the Slurm **Controller Node** Log:  
-  Log on to the controller machine for your cluster to see detailed error messages like  
-  `"GCP Error: Zone does not currently have sufficient capacity for resources"`.
-- **Wait and Re-check**:  
-  For temporary resource shortages, wait **5–10 minutes** and then re-run the `get_job_state` cell in your Jupyter notebook. Resources might become available and allow your job to proceed.
+#### Cause
+Google Cloud Platform (GCP) is unable to provision the requested compute resources due to temporary regional or zone capacity shortages.
+
+#### Resolution
+
+1. **Check the Slurm Controller Node Logs**:
+   - Take a look at the **VM log of the Slurm controller node**.
+   - Look for error messages related to resource availability. In cases of insufficient capacity, you may see a message like:
+
+     ```text
+     GCP Error: Zone does not currently have sufficient capacity for resources
+     ```
+
+2. **Wait and Retry**:
+   - This issue is often **temporary**.
+   - Wait **5–10 minutes**, then re-run the `get_job_state` cell in your notebook to check if the job has started.
+
+3. **Consider Changing Region or Zone (If Possible)**:
+   - If the issue persists, consider reconfiguring your cluster to use a different **GCP region or zone** with more available capacity.
+
+4. **Scale Down Other Jobs**:
+   - If you're running many concurrent jobs, free up resources by canceling or pausing non-critical workloads.
+
+5. **Contact Your Cloud Admin (If Applicable)**:
+   - If you're working in a managed environment, consult your GCP or cluster administrator for assistance with quotas or reserved capacity.
 
 ### Node Creation In Progress
 
-**Description**:  
-After submitting your job, the cluster may take several minutes to provision and initialize new compute nodes. During this time, your job might temporarily show a status like `NODE_FAIL` if the nodes are not yet fully ready or registered.
+#### Symptom  
+Job status shows error state such as `NODE_FAIL` shortly after submission from the notebook, especially on first run or after cluster scale-down.
 
-**Resolution**:
-- Check the Slurm **Controller Node** Logs for detailed status updates.
-- **Wait 5–10 minutes**, then recheck your job status to see if the nodes have become available and the job is progressing.
+#### Cause
+Slurm is waiting for new compute nodes to finish provisioning and become available.
+
+#### Resolution
+1. **Verify the Issue**:
+   - Check the **VM log of the Slurm controller node** to review provisioning-related messages.
+   - Look for indicators that nodes are still being created or initialized.
+
+2. **Wait for Node Readiness**:
+   - Allow **5–10 minutes** for the compute nodes to finish provisioning and register with the cluster.
+   - After waiting, check your job status using:
+     - The `squeue` command on the controller node, or
+     - The `get_job_state` cell in your notebook.
 
 ### Input File Format Error
 
-**Description**:  
-Your job might fail immediately if the input file format is incorrect or if the file is corrupted.
+#### Symptom
+Your job fails immediately or throws input parsing errors.
 
-**Resolution**:
-- Review the **Job Logs** to identify issues related to the input file. Logs are located at:
-  - `/home/af3ipynb/datapipeline_result/<input_file_name>/<timestamp>/slurm_logs/job_<job_id>/*.txt` for **data pipeline** process
-  - `/home/af3ipynb/inference_result/<input_file_name>/<timestamp>/slurm_logs/job_<job_id>/*.txt` for **inference** process.
-  
-  Each directory contains:
-  - `err.txt` – captures detailed **STDERR** output.
-  - `out.txt` – captures **STDOUT** output.
+#### Cause
+The input file may be invalid due to one of the following reasons:
+- It is in an **unsupported format**
+- It is **corrupted**
+- It is **missing required fields**
 
-- Ensure that the input file:
-  - Conforms to the expected format. Currently supported formats include alphafoldserver and alphafold3.
-  - Is not corrupted.
+#### Resolution
 
-For detailed input file requirements, please refer to [Alphafold Input Documentation](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md#alphafold-server-json-compatibility).
+1. **Check the Job Logs** for specific error messages on the Slurm controller node:
+
+   - **Data Pipeline Log Folder**:
+
+     ```text
+     /home/af3ipynb/datapipeline_result/<input_file>/<timestamp>/slurm_logs/job_<job_id>/
+     ```
+
+   - **Inference Log Folder**:
+
+     ```text
+     /home/af3ipynb/inference_result/<input_file>/<timestamp>/slurm_logs/job_<job_id>/
+     ```
+
+   Each log folder contains:
+   - `err.txt`: captures **stderr** (standard error)
+   - `out.txt`: captures **stdout** (standard output)
+
+2. **Validate the Input File**:
+
+   Ensure the input format matches one of the supported types:
+   - `alphafoldserver`
+   - `alphafold3`
+
+   Refer to the [Alphafold Input Requirements](https://github.com/google-deepmind/alphafold3/blob/main/docs/input.md#alphafold-server-json-compatibility) for complete format specifications.
+
+3. **Fix and Resubmit**:
+   - Correct any formatting issues or regenerate the input file.
+   - Re-upload the corrected file.
+   - Resubmit your job.
 
 ### Out of Memory (OOM) Issue
 
-**Description**:  
-Your job may start but fail during execution because it requires more memory than the allocated node can provide. This can occur in both the **datapipeline** and **inference** stages.
+#### Symptom
+Your job starts but fails during execution with **Out of Memory (OOM)** errors.
 
-**Resolution**:
-- Check the **Job Logs** for OOM errors or memory-related failures.
-- Modify your code or input data to reduce memory usage.
-- Consider requesting **larger node sizes** with higher memory capacity.
+#### Cause
+The job requires **more memory** than is available on the assigned compute node(s). This can happen during either the **data pipeline** or **inference** stages.
+
+#### Resolution
+
+1. **Check Job Logs on the Slurm Controller Node for OOM Errors**:
+
+   - Look in the following files for memory-related error messages:
+
+     - **Data Pipeline**:
+
+          ```text
+          /home/af3ipynb/datapipeline_result/<input_file>/<timestamp>/slurm_logs/job_<job_id>/
+          ```
+
+     - **Inference**:
+
+          ```text
+          /home/af3ipynb/inference_result/<input_file>/<timestamp>/slurm_logs/job_<job_id>/
+          ```
+
+     Each log folder contains:
+     - `err.txt`: captures **stderr** (standard error)
+     - `out.txt`: captures **stdout** (standard output)
+
+   - Common error messages include:
+
+      ```text
+      Out of Memory (OOM)
+      ```
+
+      or
+
+      ```text
+      RuntimeError: CUDA out of memory
+      Killed: 9
+      MemoryError
+      ```
+
+2. **Reduce Memory Usage**:
+
+   - Simplify the input or reduce the input size (e.g., shorter protein sequence length).
+
+   - Enable the following setting to reduce GPU memory usage:
+     - `inference_enable_unified_memory`:  
+      This allows the system to offload memory to CPU RAM when GPU memory is insufficient. It can help prevent OOM errors during inference. Set the value in the `af3-slurm-deployment.yaml` to `true` to enable:
+
+        ```json
+        "inference_enable_unified_memory": true
+        ```
+
+3. **Request More Memory**:
+
+   - Modify your job submission script or cluster configuration to request nodes with larger memory.
+
+   - For example, in the `af3-slurm-deployment.yaml` file, if the `inference_g2_partition` memory value is currently set to `46`, you can increase it to `50` to request more memory:
+
+      ```yaml
+      inference_g2_partition:
+        memory: 50
+      ```
+
+      > [!WARNING]
+      > Check the maximum memory capacity available for the node type before assigning a new value to avoid misconfiguration.
+
+   - Alternatively, you can specify memory directly in your Slurm job script:
+
+      ```bash
+      #SBATCH --mem=128G
+      ```
+
+   - You may also consider requesting more powerful machine types depending on your platform’s options.
