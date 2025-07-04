@@ -75,11 +75,21 @@ In the Google Cloud Console:
 **Where to run**: **On the system where you executed `gcluster`** (where the `gcloud` CLI is authenticated with access to your GCP project, similar to step [Grant Secret Access to the Notebook's Service Account](#2-grant-secret-access-to-the-notebooks-service-account)
 ).
 
-To verify that Secret Manager access is properly configured, open a terminal within JupyterLab and run the following command:
+To verify that Secret Manager access is properly configured:
 
-```bash
-gcloud secrets versions access latest --secret=<your-secret-name>
-```
+1. Open a terminal in JupyterLab:
+   - Go to **File > New Launcher**, or
+   - Click the **“+” button** under the **File** bar,
+
+   then click **“Terminal”** under the **Other** section.
+
+2. Then, run the following command in the terminal:
+
+   ```bash
+   gcloud secrets versions access latest --secret=<your-secret-name>
+    ```
+
+    Replace `<your-secret-name>` with the name of your secret.
 
 If the command returns the secret value successfully, it confirms that the notebook environment can securely access the SLURM REST API—just as in the image below:
 

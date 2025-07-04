@@ -42,6 +42,43 @@ Google Cloud Platform (GCP) is unable to provision the requested compute resourc
 
 1. **Check the Slurm Controller Node Logs**:
    - Take a look at the **VM log of the Slurm controller node**.
+     You can access the log through two methods:
+      1. Using the Google Cloud Console (VM UI)
+         - Open the Google Cloud Console: [https://console.cloud.google.com/](https://console.cloud.google.com/)
+         - At the top of the page, make sure you have selected the correct project name.
+         - In the left-hand menu, navigate to **Compute Engine** > **VM instances**.
+         - Click on the name of your Slurm controller VM in the list.
+         - On the VM details page, scroll down to the **Logs** section and click **Logging**.
+         - You will be able to view the relevant logs from there.
+
+      2. Accessing the Slurm Controller Node Log (via SSH or Google Cloud Console)
+
+         You can access the Slurm Controller Node either through your local terminal or the Google Cloud Console:
+
+         - Option A: SSH from Terminal
+
+            Run this command in your local terminal (replace the placeholders with your actual instance name and zone):
+
+            ```bash
+            gcloud compute ssh [INSTANCE_NAME] --zone=[ZONE]
+            ```
+
+         - Option B: SSH from Google Cloud Console
+            1. Go to the VM instances page.
+            2. Find your Slurm Controller VM.
+            3. Click the SSH button next to it to open a web-based terminal session.
+            4. To view the log, use the following command:
+
+               ```bash
+               sudo cat /var/log/slurm/slurmctld.log
+               ```
+
+               Why we use `sudo`?
+
+               The `slurmctld.log` file is typically owned by the `root` user and is not readable by standard (non-root) users. The `sudo` command temporarily elevates your privileges, allowing you to access files that require administrative permissions.
+
+               Without `sudo`, attempting to read the log file may result in a **"Permission denied"** error.
+
    - Look for error messages related to resource availability. In cases of insufficient capacity, you may see a message like:
 
      ```text
@@ -156,25 +193,25 @@ The job requires **more memory** than is available on the assigned compute node(
 
    - Common error messages include:
 
-      ```text
+      ```bash
+      # Data pipeline
       Out of Memory (OOM)
       ```
 
       or
 
-      ```text
+      ```bash
+      # Inference
       RuntimeError: CUDA out of memory
       Killed: 9
       MemoryError
       ```
 
-2. **Reduce Memory Usage**:
+2. **Handle GPU Memory Constraints**:
 
-   - Simplify the input or reduce the input size (e.g., shorter protein sequence length).
-
-   - Enable the following setting to reduce GPU memory usage:
+   - Enable the following setting to optimize GPU memory usage:
      - `inference_enable_unified_memory`:  
-      This allows the system to offload memory to CPU RAM when GPU memory is insufficient. It can help prevent OOM errors during inference. Set the value in the `af3-slurm-deployment.yaml` to `true` to enable:
+      This setting allows the system to use unified memory, enabling the GPU to access system (CPU) RAM when its own memory is insufficient. This can help reduce the likelihood of out-of-memory (OOM) errors during inference. To enable this feature, set the value to `true` in your `af3-slurm-deployment.yaml` file:
 
         ```json
         "inference_enable_unified_memory": true
@@ -182,7 +219,7 @@ The job requires **more memory** than is available on the assigned compute node(
 
 3. **Request More Memory**:
 
-   - Modify your job submission script or cluster configuration to request nodes with larger memory.
+   - You can modify your **data pipeline** or **inference** job submission script or cluster configuration to request nodes with higher memory capacity.
 
    - For example, in the `af3-slurm-deployment.yaml` file, if the `inference_g2_partition` memory value is currently set to `46`, you can increase it to `50` to request more memory:
 
@@ -192,15 +229,15 @@ The job requires **more memory** than is available on the assigned compute node(
       ```
 
       > [!WARNING]
-      > Check the maximum memory capacity available for the node type before assigning a new value to avoid misconfiguration.
+      > Before increasing the memory value, check the maximum memory capacity available for the node type to avoid misconfiguration.
 
    - Alternatively, you can specify memory directly in your Slurm job script:
 
       ```bash
-      #SBATCH --mem=128G
+      #SBATCH --mem=50G
       ```
 
-   - You may also consider requesting more powerful machine types depending on your platform’s options.
+   - You may also consider exploring more powerful machine types or configurations that offer more memory or better performance.
 
 ### Notebook Save Error
 
