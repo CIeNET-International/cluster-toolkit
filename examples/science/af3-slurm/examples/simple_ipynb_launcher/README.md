@@ -67,17 +67,18 @@ Google Cloud Platform (GCP) is unable to provision the requested compute resourc
             1. Go to the VM instances page.
             2. Find your Slurm Controller VM.
             3. Click the SSH button next to it to open a web-based terminal session.
-            4. To view the log, use the following command:
 
-               ```bash
-               sudo cat /var/log/slurm/slurmctld.log
-               ```
+         After connecting to the Slurm Controller VM (via SSH or the Google Cloud Console), open the terminal session within that VM and run the following command:
 
-               Why we use `sudo`?
+            ```bash
+            sudo cat /var/log/slurm/slurmctld.log
+            ```
 
-               The `slurmctld.log` file is typically owned by the `root` user and is not readable by standard (non-root) users. The `sudo` command temporarily elevates your privileges, allowing you to access files that require administrative permissions.
+            Why we use `sudo`?
 
-               Without `sudo`, attempting to read the log file may result in a **"Permission denied"** error.
+            The `slurmctld.log` file is typically owned by the `root` user and is not readable by standard (non-root) users. The `sudo` command temporarily elevates your privileges, allowing you to access files that require administrative permissions.
+
+            Without `sudo`, attempting to read the log file may result in a **"Permission denied"** error.
 
    - Look for error messages related to resource availability. In cases of insufficient capacity, you may see a message like:
 
