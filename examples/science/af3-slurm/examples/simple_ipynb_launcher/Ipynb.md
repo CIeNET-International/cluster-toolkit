@@ -35,7 +35,7 @@ These cells perform several crucial setup tasks:
 
    <img src="adm/install_dependencies.png" alt="install dependencies" width="1000">
 
-- **Review System Settings:** These cells display the default configurations for SLURM partitions (Datapipeline C3DH, Inference G2/A2/A2U), memory, CPU counts, and timeout durations. While you can modify the `af3_config` later if needed, reviewing these defaults is important.
+- **Review System Settings:** These cells display the default configurations for SLURM partitions (Datapipeline C3DH, Inference G2/A2/A2U), memory, CPU counts, and timeout durations. While you can modify the `af3_config` later if needed, it’s important to **familiarize yourself with the default limits of each machine shape** to ensure your jobs are appropriately configured and to avoid unexpected errors—such as running out of memory, CPU limits, or hitting timeout thresholds.
 
   <img src="adm/system_setting.png" alt="system setting" width="1000">
 
@@ -62,9 +62,14 @@ These cells perform several crucial setup tasks:
    <img src="adm/datapipeline.png" alt="data pipeline" width="1000">
 
 - After updating the filename, run the data pipeline cell. This will process your input data.
+
 - Check job status:
 
    <img src="adm/datapipeline_status.png" alt="data pipeline status" width="1000">
+
+   In some cases—for example, when there are issues with node provisioning for dynamic nodes—the job status may return `PENDING` status or an error status. This is often a temporary condition (e.g., while a node is still being provisioned), so you can try running the cell again.
+  
+   If the issue persists, please refer to the [Known Issues & How to Fix Them](README.md#known-issues-how-to-fix-them) section for further guidance.
 
 **4. Executing the Inference:**
 
@@ -81,6 +86,10 @@ These cells perform several crucial setup tasks:
 
 - Check job status:
   <img src="adm/inference_status.png" alt="inference status" width="1000">
+  
+  In some cases—for example, when there are issues with node provisioning for dynamic nodes—the job status may return `PENDING` status or an error status. This is often a temporary condition (e.g., while a node is still being provisioned), so you can try running the cell again.
+  
+  If the issue persists, please refer to the [Known Issues & How to Fix Them](../readme.md#known-issues--how-to-fix-them) section for further guidance..
 
 **5. Visualizing the Results:**
 
