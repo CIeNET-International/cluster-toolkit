@@ -237,7 +237,6 @@ deployment_groups:
       bandwidth_tier: tier_1_enabled
       allow_automatic_updates: false
       startup_script: $(datapipeline_startup.startup_script)
-      reservation_name: aiden-c3d-highmem-reservation
       advanced_machine_features:
         threads_per_core: null
 
@@ -261,7 +260,6 @@ deployment_groups:
       startup_script: $(inference_startup.startup_script)
       bandwidth_tier: gvnic_enabled
       allow_automatic_updates: false
-      reservation_name: aiden0416-g2-12
       advanced_machine_features:
         threads_per_core: null
 
